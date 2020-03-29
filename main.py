@@ -13,6 +13,13 @@ with open('config.json', 'r') as file:
 login_manager = LoginManager(app)
 
 
+@app.route('/intro')
+def intro():
+    """base of /intro page"""
+    return render_template('introduction.html')
+
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """ base of /register page """

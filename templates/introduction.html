@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        <title>Zhecker</title>
+
+    </head>
+
+    <body>
+        <h2>Система для организации соревнований по программированию Zhecker</h2>
+        <div><p><a href="?f=contests;cid=500001;lang=ru;sid=" class="selected" onclick="document.location = document.location.pathname + '?lang=ru;' + document.location.search.replace(/lang=\w+;?/, '').replace('?', ''); return false;"></a></div>
+        <header>
+            <nav class="navbar navbar-light bg-light">
+                <a href=/login>вход</a>
+                <a href=/register>регистрация</a>
+                <a href="?f=contests;cid=500001;sid=">турниры</a>
+                <a href="?f=problems;cid=500001;sid=">задачи</a>
+                <a href="docs/index.ru.html">документация</a>
+                <a href="?f=problems_all;cid=500001;sid=">архив</a>
+                <a href="?f=about;cid=500001;sid=">о системе</a>
+            </nav>
+        </header>
+
+         <div style="width: 99%; padding: 4px;">
+             <span class="messages" id="messages"></span>
+              <br>
+
+            <p>Для того чтобы в полной мере воспользоваться функциональностью системы, вы должны <a href="?f=registration;sid=">зарегистрироваться</a></p>
+            Регистрация позволит Вам:
+                <ul>
+                    <li>Принимать участие в соревнованиях</li>
+                    <li>Решать задачи из архива</li>
+                    <li>Наблюдать свои достижения в общей рейтинговой таблице участников</li>
+                </ul>
+         </div>
+
+        <div>
+                &nbsp;текущий пользователь: анонимный
+                <br>
+                <br>
+                <a href="https://github.com/klenin/cats-main">разработка</a><a href="docs/authors.html">©2020</a><br>
+
+         </div>
+    </body>
+</html>
+
