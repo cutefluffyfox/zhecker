@@ -54,9 +54,21 @@ def login():
     return render_template('login.html', form=form)
 
 
-@app.route('/main')
+@app.route('/me')
 @login_required
-def main_page():
+def main():
+    return 'Hi ' + current_user.username
+
+
+@app.route('/me/cabinet')
+@login_required
+def cabinet_page():
+    return render_template('cabinet.html', name=current_user.username)
+
+
+@app.route('/profile/<int:user_id>')
+@login_required
+def profile():
     return 'Hi ' + current_user.username
 
 
