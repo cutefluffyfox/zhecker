@@ -1,0 +1,10 @@
+{% extends "task_archive.html" %}
+
+{% block content %}
+    <h1>Турниры:</h1>
+
+    {% for tournament in tournaments %}
+        <div>{{tournament}}</div>
+    {% endfor %}
+
+{% endblock %}

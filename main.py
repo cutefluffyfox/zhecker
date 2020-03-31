@@ -19,7 +19,6 @@ def intro():
     return render_template('introduction.html')
 
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """ base of /register page """
@@ -35,7 +34,7 @@ def register():
         user_id = User.add_user(username, password, name, surname, city)
         user = User(user_id)
         login_user(user, remember=remember)
-        return redirect('/main')
+        return redirect('/cabinet')
     return render_template('register.html', form=form)
 
 
@@ -50,27 +49,31 @@ def login():
         remember = form.remember_me.data
         user = User.get_user(username, password)
         login_user(user, remember=remember)
-        return redirect('/main')
+        return redirect('/cabinet')
     return render_template('login.html', form=form)
 
 
-@app.route('/me')
-@login_required
-def main():
-    return 'Hi ' + current_user.username
-
-
-@app.route('/me/cabinet')
+@app.route('/cabinet')
 @login_required
 def cabinet_page():
-    return render_template('cabinet.html', name=current_user.username)
+    """это нужно заменить на sql разумеется"""
+    tournaments = []
+
+    return render_template('cabinet_back.html', name=current_user.username, tournaments=tournaments)
 
 
 @app.route('/profile/<int:user_id>')
-@login_required
-def profile():
-    return 'Hi ' + current_user.username
+def profile(user_id):
+    user = User(user_id)
+    print(user.name)
+    print(user.surname)
+    print(user.city)
 
+    return render_template('profile.html', name=user.name, surename=user.surname, city=user.city)
+
+@app.route('/archive')
+def archive():
+    return render_template('task_archive_back.html', )
 
 @login_manager.user_loader
 def load_user(user_id):
