@@ -15,13 +15,13 @@ login_manager = LoginManager(app)
 
 @app.route('/intro')
 def intro():
-    """base of /intro page"""
+    """Титульная страница сайта"""
     return render_template('introduction.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """ base of /register page """
+    """Регистрация"""
 
     form = forms.RegisterForm()
     if form.validate_on_submit():
@@ -40,7 +40,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """ base of /login page """
+    """Вход"""
 
     form = forms.LoginForm()
     if form.validate_on_submit():
@@ -56,6 +56,7 @@ def login():
 @app.route('/cabinet')
 @login_required
 def cabinet_page():
+    """Личный кабинет"""
     """это нужно заменить на sql разумеется"""
     tournaments = []
 
@@ -64,6 +65,7 @@ def cabinet_page():
 
 @app.route('/profile/<int:user_id>')
 def profile(user_id):
+    """Профиль"""
     user = User(user_id)
     print(user.name)
     print(user.surname)
@@ -73,16 +75,19 @@ def profile(user_id):
 
 @app.route('/archive')
 def archive():
+    """Архив задач"""
     return render_template('task_archive_back.html')
 
 
 @app.route('/documentation')
 def documentation():
+    """Документация"""
     return render_template('documentation.html')
 
 
 @app.route('/system')
 def system():
+    """О системе"""
     return render_template('system.html')
 
 
