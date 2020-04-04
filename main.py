@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
@@ -73,7 +73,18 @@ def profile(user_id):
 
 @app.route('/archive')
 def archive():
-    return render_template('task_archive_back.html', )
+    return render_template('task_archive_back.html')
+
+
+@app.route('/documentation')
+def documentation():
+    return render_template('documentation.html')
+
+
+@app.route('/system')
+def system():
+    return render_template('system.html')
+
 
 @login_manager.user_loader
 def load_user(user_id):
