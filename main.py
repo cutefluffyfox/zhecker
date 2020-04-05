@@ -1,18 +1,20 @@
-import json
+from json import load
 
 from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
-from database import User, CreateDatabase
+from models import User
+from db_session import global_init
 
-CreateDatabase()
+global_init('database.db')
 app = Flask(__name__)
 with open('config.json', 'r') as file:
-    app.config['SECRET_KEY'] = json.load(file)['APP_KEY']
+    app.config['SECRET_KEY'] = load(file)['APP_KEY']
 login_manager = LoginManager(app)
 
 
+@app.route('/')
 @app.route('/intro')
 def intro():
     """Титульная страница сайта"""
@@ -31,8 +33,13 @@ def register():
         surname = form.surname.data
         city = form.city.data
         remember = form.remember_me.data
-        user_id = User.add_user(username, password, name, surname, city)
-        user = User(user_id)
+        user_id = User.add_user(username=username,
+                                password=password,
+                                email='@ADD@',
+                                name=name,
+                                surname=surname,
+                                city=city)
+        user = User.get_user(user_id)
         login_user(user, remember=remember)
         return redirect('/cabinet')
     return render_template('register.html', form=form)
@@ -47,7 +54,7 @@ def login():
         username = form.username.data
         password = form.password.data
         remember = form.remember_me.data
-        user = User.get_user(username, password)
+        user = User.get_user_by_username(username, password)
         login_user(user, remember=remember)
         return redirect('/cabinet')
     return render_template('login.html', form=form)
@@ -66,12 +73,13 @@ def cabinet_page():
 @app.route('/profile/<int:user_id>')
 def profile(user_id):
     """Профиль"""
-    user = User(user_id)
+    user = User.get_user(user_id)
     print(user.name)
     print(user.surname)
     print(user.city)
 
     return render_template('profile.html', name=user.name, surename=user.surname, city=user.city)
+
 
 @app.route('/archive')
 def archive():
@@ -93,7 +101,7 @@ def system():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(user_id)
+    return User.get_user(user_id)
 
 
 app.run()
