@@ -53,14 +53,14 @@ def login():
     return render_template('login.html', form=form)
 
 
-@app.route('/cabinet')
+@app.route('/contests')
 @login_required
 def cabinet_page():
     """Личный кабинет"""
     """это нужно заменить на sql разумеется"""
     tournaments = []
 
-    return render_template('cabinet_back.html', name=current_user.username, tournaments=tournaments)
+    return render_template('contests_back.html', name=current_user.username, tournaments=tournaments)
 
 
 @app.route('/profile/<int:user_id>')
@@ -71,24 +71,30 @@ def profile(user_id):
     print(user.surname)
     print(user.city)
 
-    return render_template('profile.html', name=user.name, surename=user.surname, city=user.city)
+    return render_template('profile_icon.html', name=user.name, surename=user.surname, city=user.city)
+
 
 @app.route('/archive')
 def archive():
     """Архив задач"""
-    return render_template('task_archive_back.html')
-
-
-@app.route('/documentation')
-def documentation():
-    """Документация"""
-    return render_template('documentation.html')
+    tasks = []
+    return render_template('task_archive_back.html', tasks=tasks)
 
 
 @app.route('/system')
 def system():
     """О системе"""
     return render_template('system.html')
+
+@app.route('/contests')
+def contests():
+    """О системе"""
+    return render_template('contests_back.html')
+
+@app.route('/test')
+def tests():
+    """О системе"""
+    return render_template('bar.html')
 
 
 @login_manager.user_loader

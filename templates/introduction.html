@@ -14,25 +14,21 @@
 
     <body>
         <h2>Система для организации соревнований по программированию Zhecker</h2>
-        <div><p><a href="?f=contests;cid=500001;lang=ru;sid=" class="selected" onclick="document.location = document.location.pathname + '?lang=ru;' + document.location.search.replace(/lang=\w+;?/, '').replace('?', ''); return false;"></a></div>
         <header>
             <nav class="navbar navbar-light bg-light">
-                <a href=/login>вход</a>
-                <a href=/register>регистрация</a>
-                <a href="?f=contests;cid=500001;sid=">турниры</a>
-                <a href="?f=problems;cid=500001;sid=">задачи</a>
-                <a href="docs/index.ru.html">документация</a>
-                <a href="?f=problems_all;cid=500001;sid=">архив</a>
-                <a href="?f=about;cid=500001;sid=">о системе</a>
+                <a href=/login>Вход</a>
+                <a href=/register>Регистрация</a>
+                <a href="">Турниры</a>
+                <a href="/archive">Архив задач</a>
+                <a href="/system">О системе</a>
             </nav>
         </header>
 
-         <div style="width: 99%; padding: 4px;">
-             <span class="messages" id="messages"></span>
-             <br>
+        <div style="width: 99%; padding: 4px;">
+            <span class="messages" id="messages"></span><br>
 
-             <p>Для того чтобы в полной мере воспользоваться функциональностью системы, вы должны <a href="?f=registration;sid=">зарегистрироваться</a></p>
-             Регистрация позволит Вам:
+
+             <a href="/register">Регистрация </a>позволит Вам:
                  <ul>
                     <li>Принимать участие в соревнованиях</li>
                     <li>Решать задачи из архива</li>
