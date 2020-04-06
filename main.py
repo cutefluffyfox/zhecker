@@ -41,7 +41,7 @@ def register():
                                 city=city)
         user = User.get_user(user_id)
         login_user(user, remember=remember)
-        return redirect('/cabinet')
+        return redirect('/contests')
     return render_template('register.html', form=form)
 
 
@@ -56,18 +56,8 @@ def login():
         remember = form.remember_me.data
         user = User.get_user_by_username(username, password)
         login_user(user, remember=remember)
-        return redirect('/cabinet')
+        return redirect('/contests')
     return render_template('login.html', form=form)
-
-
-@app.route('/contests')
-@login_required
-def cabinet_page():
-    """Личный кабинет"""
-    """это нужно заменить на sql разумеется"""
-    tournaments = []
-
-    return render_template('contests_back.html', name=current_user.username, tournaments=tournaments)
 
 
 @app.route('/profile/<int:user_id>')
@@ -78,36 +68,59 @@ def profile(user_id):
     print(user.surname)
     print(user.city)
 
-    return render_template('profile_icon.html', name=user.name, surename=user.surname, city=user.city)
-
+    return render_template('profile.html', name=user.name, surename=user.surname, city=user.city)
 
 
 @app.route('/archive')
 def archive():
     """Архив задач"""
     tasks = []
-    return render_template('task_archive_back.html', tasks=tasks)
+    return render_template('archive.html', type="Архив", tasks=tasks)
 
 
 @app.route('/system')
 def system():
     """О системе"""
-    return render_template('system.html')
+    return render_template('system.html', type="О системе")
+
 
 @app.route('/contests')
-def contests():
-    """О системе"""
-    return render_template('contests_back.html')
+@login_required
+def cabinet_page():
+    """Личный кабинет"""
+    """это нужно заменить на sql разумеется"""
+    tournaments = []
 
-@app.route('/test')
-def tests():
-    """О системе"""
-    return render_template('bar.html')
+    return render_template('contests.html', type="Контесты", name=current_user.username, tournaments=tournaments)
+
+
+@app.route('/tournament')
+def tournament():
+    """Личный кабинет"""
+    """это нужно заменить на sql разумеется"""
+    tournaments = []
+
+    return render_template('tournament.html', type="Турнир")
+
+
+@app.route('/results')
+def results():
+    """Личный кабинет"""
+    """это нужно заменить на sql разумеется"""
+
+    return render_template('results.html', type="Результаты")
+
+
+@app.route('/task')
+def task():
+    """Личный кабинет"""
+    """это нужно заменить на sql разумеется"""
+
+    return render_template('task.html', type="Задача")
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user(user_id)
-
 
 app.run()
