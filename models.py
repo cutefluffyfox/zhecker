@@ -54,16 +54,69 @@ class User(SqlAlchemyBase, UserMixin):
     verification = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     contests = sqlalchemy.Column(sqlalchemy.String, default='')
 
+    def change_unique(self, username=None, email=None) -> dict:
+        """
+        Change username or email, return
+        {'status': 'ok'}
+        {'status': 'UNIQUE constraint failed: users.<username/email>'}
+        {'status': 'invalid <username/email> type, expected str or None'}
+        """
+        try:
+            assert type(username) == str or username is None, 'invalid username type, expected str or None'
+            assert type(email) == str or email is None, 'invalid email type, expected str or None'
+            session = create_session()
+            user = session.query(User).filter(User.id == self.id).first()
+            if username is not None:
+                user.username = self.username = username
+            if email is not None:
+                user.email = self.email = email
+            session.commit()
+            return {'status': 'ok'}
+        except sqlalchemy.exc.IntegrityError as ex:
+            return {'status': ex.args[0][25:]}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
+
+    def change_password(self, password: str) -> dict:
+        """
+        Change password, return
+        {'status': 'ok'}
+        {'status': 'invalid password type, expected str'}
+        """
+        try:
+            session = create_session()
+            hashed_password = self.__generate_password(password)
+            user = session.query(User).filter(User.id == self.id).first()
+            user.password = self.password = hashed_password
+            session.commit()
+            return {'status': 'ok'}
+        except ValueError:
+            return {'status': 'invalid password type, expected str'}
+
+    def change_personal_data(self, name=None, surname=None, city=None):
+        """Change name, surname, city"""
+        session = create_session()
+        user = session.query(User).filter(User.id == self.id).first()
+        if name is not None:
+            user.name = self.name = name
+        if surname is not None:
+            user.surname = self.surname = surname
+        if city is not None:
+            user.city = self.city = city
+        session.commit()
+
     def __repr__(self):
-        return f"{self.username}: {self.email}"
+        return f"User(username={self.username}, email={self.email}>"
 
     @staticmethod
     def get_user(user_id: int):
+        """Return User(**kwargs) by user_id or None if id is invalid"""
         session = create_session()
         return session.query(User).filter(User.id == user_id).first()
 
     @staticmethod
     def get_user_by_username(username: str, password: str):
+        """Return User(**kwargs) by username and not hashed password or None if username or password is invalid"""
         session = create_session()
         return session.query(User).filter(User.username == username, User.password == User.__generate_password(password)).first()
 
@@ -72,17 +125,31 @@ class User(SqlAlchemyBase, UserMixin):
         return sha3_256((password + load(open('config.json', 'r', encoding='UTF-8'))['SALT']).encode('UTF-8')).hexdigest()
 
     @staticmethod
-    def add_user(username: str, email: str, password: str, name: str, surname: str, city=None):
-        session = create_session()
-        session.add(User(username=username,
-                         email=email,
-                         password=User.__generate_password(password),
-                         name=name,
-                         surname=surname,
-                         city=city,
-                         verification="".join([chr(randint(65, 90)) if randint(0, 1) else chr(randint(97, 122)) for _ in range(30)])))
-        session.commit()
-        return session.query(User).filter(User.username == username).first().id
+    def add_user(username: str, email: str, password: str, name: str, surname: str, city=None) -> dict:
+        """
+        Add user to database, return:
+        {'status': 'ok', 'id': int}
+        {'status': 'invalid password type, expected str'}
+        {'status': 'UNIQUE constraint failed: users.<username or email>'}
+        {'status': 'NOT NULL constraint failed: users<NOT NULL column>'}
+        """
+        try:
+            session = create_session()
+            session.add(User(username=username,
+                             email=email,
+                             password=User.__generate_password(password),
+                             name=name,
+                             surname=surname,
+                             city=city,
+                             verification="".join([chr(randint(65, 90)) if randint(0, 1) else chr(randint(97, 122)) for _ in range(30)])))
+            session.commit()
+            return {'status': 'ok', 'id': session.query(User).filter(User.username == username).first().id}
+        except ValueError:
+            return {'status': 'invalid password type, expected str'}
+        except TypeError as ex:
+            return {'status': ex.args[0]}
+        except sqlalchemy.exc.IntegrityError as ex:
+            return {'status': ex.args[0][25:]}
 
 
 class Attempt(SqlAlchemyBase):
