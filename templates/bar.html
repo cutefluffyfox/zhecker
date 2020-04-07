@@ -1,18 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!--JS для смены темы navbar-->
     <script defer src="../static/theme.js"></script>
-    <link rel="stylesheet" href="../static/style/style.css" />
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700&display=swap"
-      rel="stylesheet"
-    />
+<!--CSS файл для navbar-->
+    <link rel="stylesheet" href="../static/style/nav_style.css" />
+<!--Шрифт-->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Open Sans">
+      <style>
+            body {background: RGB(214, 237, 253);}
+            #navigation {z-index: 5; }
+      </style>
     <title>{{ type }}</title>
   </head>
   <body>
-    <nav class="navbar">
+
+    <nav id="navigation" class="navbar">
       <ul class="navbar-nav">
 <!--ЛОГО-->
         <li class="logo">
@@ -118,8 +124,7 @@
           </a>
         </li>
 <!--О СИСТЕМЕ-->
-        <li class="nav-item"
-                class="fa-secondary">
+        <li class="nav-item">
           <a href="/system" class="nav-link">
             <svg
               aria-hidden="true"
@@ -440,8 +445,7 @@
 <!--ТУРНИРЫ: турниры | contests.html-->
 <!--ТУРНИР: задачи | tournament.html-->
 <!--ЗАДАЧА: условие+поле для кода | task.html-->
-
-      {% block content %}{% endblock %}
+        {% block content %}{% endblock %}
     </main>
 
   </body>

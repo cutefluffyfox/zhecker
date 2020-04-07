@@ -1,5 +1,25 @@
 {% extends "bar.html" %}
-
 {% block content %}
 
+  <h1>{{ name }}</h1>
+  <p>{{ question }}</p>
+<script src="http://codemirror.net/lib/codemirror.js"></script>
+<link rel="stylesheet" href="http://codemirror.net/lib/codemirror.css">
+
+<textarea id="code"></textarea>
+<script>
+ var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        lineNumbers: true,
+        lineWrapping:true,
+        autofocus:true
+      });
+
+var pos=editor.posFromIndex(3);
+editor.setCursor(pos.line,pos.ch);
+
+</script>
+
 {% endblock %}
+
+
+

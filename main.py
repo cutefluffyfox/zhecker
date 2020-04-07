@@ -42,7 +42,8 @@ def register():
         user = User.get_user(user_id)
         login_user(user, remember=remember)
         return redirect('/contests')
-    return render_template('register.html', form=form)
+    return render_template('register.html',
+                           form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -57,7 +58,8 @@ def login():
         user = User.get_user_by_username(username, password)
         login_user(user, remember=remember)
         return redirect('/contests')
-    return render_template('login.html', form=form)
+    return render_template('login.html',
+                           form=form)
 
 
 @app.route('/profile/<int:user_id>')
@@ -68,55 +70,78 @@ def profile(user_id):
     print(user.surname)
     print(user.city)
 
-    return render_template('profile.html', name=user.name, surename=user.surname, city=user.city)
+    return render_template('profile.html',
+                           type="Профиль",
+                           name=user.name,
+                           surename=user.surname,
+
+                           city=user.city)
 
 
 @app.route('/archive')
 def archive():
     """Архив задач"""
     tasks = []
-    return render_template('archive.html', type="Архив", tasks=tasks)
+    return render_template('archive.html',
+                           type="Архив",
+                           tasks=tasks)
 
 
 @app.route('/system')
 def system():
     """О системе"""
-    return render_template('system.html', type="О системе")
+    return render_template('system.html',
+                           type="О системе")
 
 
 @app.route('/contests')
 @login_required
 def cabinet_page():
-    """Личный кабинет"""
+    """Турниры"""
     """это нужно заменить на sql разумеется"""
     tournaments = []
 
-    return render_template('contests.html', type="Контесты", name=current_user.username, tournaments=tournaments)
+    return render_template('contests.html',
+                           type="Контесты",
+                           name=current_user.username,
+                           tournaments=tournaments)
 
 
 @app.route('/tournament')
 def tournament():
-    """Личный кабинет"""
-    """это нужно заменить на sql разумеется"""
+    """Турнир"""
     tournaments = []
 
-    return render_template('tournament.html', type="Турнир")
+    return render_template('tournament.html',
+                           type="Турнир")
 
 
 @app.route('/results')
 def results():
-    """Личный кабинет"""
-    """это нужно заменить на sql разумеется"""
+    """Результаты"""
 
-    return render_template('results.html', type="Результаты")
+    return render_template('results.html',
+                           type="Результаты")
 
 
 @app.route('/task')
 def task():
-    """Личный кабинет"""
-    """это нужно заменить на sql разумеется"""
+    """Задание"""
+    name = ""
+    question = ""
 
-    return render_template('task.html', type="Задача")
+    return render_template('task.html',
+                           type="Задача",
+                           name=name,
+                           question=question)
+
+
+@app.route('/settings')
+def settings():
+    """Настройки"""
+
+    return render_template('settings.html',
+                           type="Настройки")
 
 
 @login_manager.user_loader
