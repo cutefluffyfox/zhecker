@@ -1,6 +1,6 @@
 from json import load
 
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
