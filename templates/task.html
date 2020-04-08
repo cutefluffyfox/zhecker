@@ -3,10 +3,21 @@
 
   <h1>{{ name }}</h1>
   <p>{{ question }}</p>
+
+  <table>
+    <tr> <th>Ввод</th>  <th>Вывод</th> </tr>
+    {% for i in range(input_data| length) %}
+      <tr>
+        <td>{{input_data[i]}}</td> <td>{{output_data[i]}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+<a>Файл с решение:</a>
+<input type="file" class="form-control-file" id="photo" name="file">
 <script src="http://codemirror.net/lib/codemirror.js"></script>
 <link rel="stylesheet" href="http://codemirror.net/lib/codemirror.css">
 
-<textarea id="code"></textarea>
+<textarea id="code" placeholder="Ваш каод здесь"></textarea>
 <script>
  var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
         lineNumbers: true,
@@ -18,6 +29,8 @@ var pos=editor.posFromIndex(3);
 editor.setCursor(pos.line,pos.ch);
 
 </script>
+<button type="submit" name="submit" value="1" class="button">Отправить</button>
+
 
 {% endblock %}
 

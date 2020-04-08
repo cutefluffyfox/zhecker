@@ -4,7 +4,7 @@ from flask import Flask, render_template, redirect
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
-from models import User
+from models import User, Contest
 from db_session import global_init
 
 global_init('database.db')
@@ -42,6 +42,7 @@ def register():
         user = User.get_user(user_id)
         login_user(user, remember=remember)
         return redirect('/contests')
+
     return render_template('register.html',
                            form=form)
 
@@ -58,90 +59,110 @@ def login():
         user = User.get_user_by_username(username, password)
         login_user(user, remember=remember)
         return redirect('/contests')
+
     return render_template('login.html',
                            form=form)
 
 
 @app.route('/profile/<int:user_id>')
+@login_required
 def profile(user_id):
     """Профиль"""
     user = User.get_user(user_id)
-    print(user.name)
-    print(user.surname)
-    print(user.city)
-
+    permission = False
     return render_template('profile.html',
                            type="Профиль",
+                           create=permission,
                            name=user.name,
                            surename=user.surname,
-
-                           city=user.city)
+                           city=user.city,
+                           mail=user.email)
 
 
 @app.route('/archive')
 def archive():
     """Архив задач"""
     tasks = []
+    permission = False
     return render_template('archive.html',
                            type="Архив",
+                           create=permission,
                            tasks=tasks)
 
 
 @app.route('/system')
 def system():
     """О системе"""
+    permission = False
     return render_template('system.html',
-                           type="О системе")
+                           type="О системе",
+                           create=permission,)
 
 
 @app.route('/contests')
 @login_required
-def cabinet_page():
+def contests():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
     tournaments = []
-
+    permission = False
     return render_template('contests.html',
                            type="Контесты",
+                           create=permission,
                            name=current_user.username,
                            tournaments=tournaments)
 
 
-@app.route('/tournament')
-def tournament():
+@app.route('/contest/<int:contest_id>')
+@login_required
+def contest(contest_id):
     """Турнир"""
-    tournaments = []
+    tasks = []
+    id = contest_id
+    permission = False
+    return render_template('contest.html',
+                           type="Турнир",
+                           create=permission,
+                           tasks=tasks)
 
-    return render_template('tournament.html',
-                           type="Турнир")
 
-
-@app.route('/results')
+@app.route('/results/<int:contest_id>')
+@login_required
 def results():
     """Результаты"""
-
+    permission = False
     return render_template('results.html',
-                           type="Результаты")
+                           type="Результаты",
+                           create=permission)
 
 
-@app.route('/task')
-def task():
+@app.route('/task/<int:task_id>')
+def task(task_id):
     """Задание"""
-    name = ""
-    question = ""
-
+    id = task_id
+    name = "Мышь"
+    question = "МЫШЬ МЫШ МЫШ"
+    input_data = [1, 2]
+    output_data = [3, 4]
+    permission = False
     return render_template('task.html',
                            type="Задача",
+                           create=permission,
                            name=name,
-                           question=question)
+                           question=question,
+                           input_data=input_data,
+                           output_data=output_data,
+                           id=id)
 
 
-@app.route('/settings')
+@app.route('/settings/<int:user_id>')
+@login_required
 def settings():
     """Настройки"""
-
+    permission = False
     return render_template('settings.html',
-                           type="Настройки")
+                           type="Настройки",
+                           create=permission)
 
 
 @login_manager.user_loader

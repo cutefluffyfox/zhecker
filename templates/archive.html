@@ -1,6 +1,14 @@
 {% extends "bar.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="../static/style/archiv_style.css" />
+
+    <div class="d1">
+      <form>
+        <input type="text" placeholder="Найти задачу">
+        <button type="submit"></button>
+      </form>
+    </div>
     <h1>Задачи:</h1>
 
     {% for task in tasks %}

@@ -1,0 +1,7 @@
+{% extends "bar.html" %}
+
+{% block content %}
+    {% for task in tasks %}
+        <h3>{{task}}</h3>
+    {% endfor %}
+{% endblock %}
