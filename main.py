@@ -4,7 +4,7 @@ from flask import Flask, render_template, redirect
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
-from models import User, Contest
+from models import User, Contest, Task
 from db_session import global_init
 
 global_init('database.db')
@@ -79,15 +79,24 @@ def profile(user_id):
                            mail=user.email)
 
 
-@app.route('/archive')
+@app.route('/archive', methods=['GET', 'POST'])
 def archive():
     """Архив задач"""
+
+    form = forms.TaskSearch()
+    if form.validate_on_submit():
+        title = form.title.data
+        task = Task.get_task_by_title(title)
+
+        return redirect('/contests')
+    
     tasks = []
     permission = False
     return render_template('archive.html',
                            type="Архив",
                            create=permission,
-                           tasks=tasks)
+                           tasks=tasks,
+                           form=form)
 
 
 @app.route('/system')
@@ -99,7 +108,7 @@ def system():
                            create=permission,)
 
 
-@app.route('/contests')
+@app.route('/contests', methods=['GET', 'POST'])
 @login_required
 def contests():
     """Турниры"""
@@ -155,7 +164,7 @@ def task(task_id):
                            id=id)
 
 
-@app.route('/settings/<int:user_id>')
+@app.route('/settings/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def settings():
     """Настройки"""

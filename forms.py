@@ -18,3 +18,11 @@ class LoginForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
+
+
+class TaskSearch(FlaskForm):
+    title = StringField('Назавание задачи', validators=[DataRequired()])
+
+
+class ContestSearch(FlaskForm):
+    contest_name = StringField('Назавание турнира', validators=[DataRequired()])
