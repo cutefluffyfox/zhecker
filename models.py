@@ -26,6 +26,9 @@ class Task(SqlAlchemyBase):
     reference = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     attempts = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     successful = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+    """Нужен метод add_task(title, description ?input, output?)"""
+    """Нужен метод  Task.get_task_by_title(title) """
+    """add_task"""
 
 
 class Contest(SqlAlchemyBase):
@@ -38,7 +41,9 @@ class Contest(SqlAlchemyBase):
     tasks = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     start_time = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     end_time = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    """Нужен метод add_contest(idшники задач)"""
 
+    """get_contest_by_title"""
 
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'

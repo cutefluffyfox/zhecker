@@ -22,7 +22,27 @@ class LoginForm(FlaskForm):
 
 class TaskSearch(FlaskForm):
     title = StringField('Назавание задачи', validators=[DataRequired()])
+    submit = SubmitField('Искать')
 
 
 class ContestSearch(FlaskForm):
-    contest_name = StringField('Назавание турнира', validators=[DataRequired()])
+    title= StringField('Назавание турнира', validators=[DataRequired()])
+    submit = SubmitField('Искать')
+
+
+class CreateTask(FlaskForm):
+    title = StringField('Назавание задачи', validators=[DataRequired()])
+    description = StringField('Описание задачи', validators=[DataRequired()])
+    """tasks"""
+    start_time = StringField('Начало', validators=[DataRequired()])
+    end_time = StringField('Конец', validators=[DataRequired()])
+    submit = SubmitField('Создать')
+    """Тесты как будут подавать сам сделай пж(файлами/не файлами...)"""
+
+
+class CreateContest(FlaskForm):
+    """не знаю, как записать запись добавление нескольктх задач"""
+    title = StringField('Назавание турнира', validators=[DataRequired()])
+    description = StringField('Назавание турнира')
+    submit = SubmitField('Создать')
+

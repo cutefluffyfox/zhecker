@@ -86,10 +86,9 @@ def archive():
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
-        task = Task.get_task_by_title(title)
+        tasks = Task.get_task_by_title(title)
 
-        return redirect('/contests')
-    
+
     tasks = []
     permission = False
     return render_template('archive.html',
@@ -98,6 +97,21 @@ def archive():
                            tasks=tasks,
                            form=form)
 
+
+@app.route('/create_task', methods=['GET', 'POST'])
+def create_task():
+    form = forms.CreateTask()
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+
+        return redirect('/archive')
+
+    permission = True
+    return render_template('create_task.html',
+                           type="Создать задачу",
+                           create=permission,
+                           form=form)
 
 @app.route('/system')
 def system():
@@ -113,8 +127,13 @@ def system():
 def contests():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
+    form = forms.ContestSearch()
+    if form.validate_on_submit():
+        title = form.title.data
+        contests = Task.get_contest_by_title(title)
+
     tournaments = []
-    permission = False
+    permission = True
     return render_template('contests.html',
                            type="Контесты",
                            create=permission,
@@ -133,6 +152,22 @@ def contest(contest_id):
                            type="Турнир",
                            create=permission,
                            tasks=tasks)
+
+
+@app.route('/create_contest', methods=['GET', 'POST'])
+def create_contest():
+    form = forms.CreateContest()
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        tasks = form.tasks.data
+
+        return redirect('/archive')
+
+    permission = True
+    return render_template('create_contest.html',
+                           type="Контест",
+                           create=permission)
 
 
 @app.route('/results/<int:contest_id>')
