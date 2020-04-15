@@ -72,6 +72,9 @@ class Test(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def __repr__(self):
+        return f"Test(input='{self.input}', output='{self.output}')"
+
 
 class Task(SqlAlchemyBase):
     __tablename__ = 'tasks'
@@ -173,6 +176,9 @@ class Task(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def __repr__(self):
+        return f"Task(title='{self.title}', attempts={self.attempts})"
+
 
 class Contest(SqlAlchemyBase):
     __tablename__ = 'contests'
@@ -187,6 +193,9 @@ class Contest(SqlAlchemyBase):
     """Нужен метод add_contest(idшники задач)"""
 
     """get_contest_by_title"""
+
+    def __repr__(self):
+        return f"Contest(title='{self.title}', tasks='{self.tasks}')"
 
 
 class User(SqlAlchemyBase, UserMixin):
@@ -238,9 +247,6 @@ class User(SqlAlchemyBase, UserMixin):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
-    def __repr__(self):
-        return f"User(username={self.username}, email={self.email})"
-
     @staticmethod
     def get_user(user_id: int):
         """Return User(**kwargs) by user_id or None if id is invalid"""
@@ -284,6 +290,9 @@ class User(SqlAlchemyBase, UserMixin):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def __repr__(self):
+        return f"User(username='{self.username}', email='{self.email}')"
+
 
 class Attempt(SqlAlchemyBase):
     __tablename__ = 'attempts'
@@ -296,4 +305,7 @@ class Attempt(SqlAlchemyBase):
     score = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     status = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     time = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"Attempt(score={self.score}, status='{self.status}')"
 
