@@ -5,20 +5,26 @@
 
     <div class="d1">
       <form action="" method="post" novalidate>
+          {{ form.hidden_tag() }}
           <p>
             {{ form.title.label }}<br>
-            {{ form.title(class="form-control") }}<br>
+            {{ form.title(class="control") }}<br>
             {% for error in form.title.errors %}
                 <div class="alert alert-danger" role="alert">{{ error }}</div>
             {% endfor %}
           <p>
-            {{ form.submit(type="submit", class="btn btn-primary") }}
+
+            {{ form.submit(type="submit", class="button") }}
       </form>
     </div>
     <h1>Задачи:</h1>
 
-    {% for task in tasks %}
-        <div>{{task}}</div>
-    {% endfor %}
-
+    <table>
+      <tr> <th>id</th>  <th>Назавние</th>  <th>Описание</th> </tr>
+        {% for task in tasks %}
+          <tr>
+            <td>{{task[0]}}</td> <td><a href="/task/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
+          </tr>
+        {% endfor %}
+    </table>
 {% endblock %}

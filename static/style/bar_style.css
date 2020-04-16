@@ -127,7 +127,7 @@ main {
   transform: rotate(-180deg);
 }
 
-/* Small screens */
+/* SS */
 @media only screen and (max-width: 600px) {
   .navbar {
     bottom: 0;
@@ -152,7 +152,7 @@ main {
   }
 }
 
-/* Large screens */
+/* BS */
 @media only screen and (min-width: 600px) {
   .navbar {
     top: 0;

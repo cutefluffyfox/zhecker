@@ -3,5 +3,27 @@
 {% block content %}
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
+    <p>
+      {{ form.title.label }}<br>
+      {{ form.title(class="control") }}<br>
+      {% for error in form.title.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endfor %}
+
+    <p>
+      {{ form.description.label }}<br>
+      {{ form.description(class="control") }}<br>
+      {% for error in form.description.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
+      {{ form.reference.label }}<br>
+      {{ form.reference(type="file", class="form-control-file", id="photo") }}<br>
+      {% for error in form.reference.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+    <p>
+      {{ form.submit(type="submit", class="button") }}</p>
   </form>
 {% endblock %}

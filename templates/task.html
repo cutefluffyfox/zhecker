@@ -1,7 +1,7 @@
 {% extends "bar.html" %}
 {% block content %}
 
-  <h1>{{ name }}</h1>
+  <h1>{{ title }}</h1>
   <p>{{ question }}</p>
 
   <table>
@@ -11,7 +11,8 @@
         <td>{{input_data[i]}}</td> <td>{{output_data[i]}}</td>
       </tr>
     {% endfor %}
-  </table>
+  </table><br>
+
 <a>Файл с решение:</a>
 <input type="file" class="form-control-file" id="photo" name="file">
 <script src="http://codemirror.net/lib/codemirror.js"></script>
@@ -25,8 +26,8 @@
         autofocus:true
       });
 
-var pos=editor.posFromIndex(3);
-editor.setCursor(pos.line,pos.ch);
+ var pos=editor.posFromIndex(3);
+ editor.setCursor(pos.line,pos.ch);
 
 </script>
 <button type="submit" name="submit" value="1" class="button">Отправить</button>

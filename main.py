@@ -15,6 +15,7 @@ login_manager = LoginManager(app)
 
 
 @app.route('/')
+
 @app.route('/intro')
 def intro():
     """Титульная страница сайта"""
@@ -76,26 +77,40 @@ def profile(user_id):
                            name=user.name,
                            surename=user.surname,
                            city=user.city,
-                           mail=user.email)
+                           mail=user.email,
+                           current_id=current_user.id)
+
+
+@app.route('/people')
+@login_required
+def preople():
+    """Профиль"""
+
+    permission = False
+    return render_template('people.html',
+                           type="Профиль"
+)
 
 
 @app.route('/archive', methods=['GET', 'POST'])
 def archive():
     """Архив задач"""
-
+    tasks = []
+    tasks_info = []
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
-        tasks = Task.get_task_by_title(title)
+        tasks_info = Task.get_task_by_title(title)
 
-
-    tasks = []
-    permission = False
+    for i in tasks_info:
+        tasks.append([i.id, i.title, i.description])
+    permission = True
     return render_template('archive.html',
                            type="Архив",
                            create=permission,
                            tasks=tasks,
-                           form=form)
+                           form=form,
+                           current_id=current_user.id)
 
 
 @app.route('/create_task', methods=['GET', 'POST'])
@@ -104,6 +119,8 @@ def create_task():
     if form.validate_on_submit():
         title = form.title.data
         description = form.description.data
+        reference = form.reference.data
+        Task.add_task(current_user.id, title, description, reference)
 
         return redirect('/archive')
 
@@ -111,7 +128,8 @@ def create_task():
     return render_template('create_task.html',
                            type="Создать задачу",
                            create=permission,
-                           form=form)
+                           form=form,
+                           current_id=current_user.id)
 
 @app.route('/system')
 def system():
@@ -119,7 +137,9 @@ def system():
     permission = False
     return render_template('system.html',
                            type="О системе",
-                           create=permission,)
+                           create=permission,
+                           current_id=current_user.id)
+
 
 
 @app.route('/contests', methods=['GET', 'POST'])
@@ -138,7 +158,9 @@ def contests():
                            type="Контесты",
                            create=permission,
                            name=current_user.username,
-                           tournaments=tournaments)
+                           tournaments=tournaments,
+                           form=form,
+                           current_id=current_user.id)
 
 
 @app.route('/contest/<int:contest_id>')
@@ -151,7 +173,8 @@ def contest(contest_id):
     return render_template('contest.html',
                            type="Турнир",
                            create=permission,
-                           tasks=tasks)
+                           tasks=tasks,
+                           current_id=current_user.id)
 
 
 @app.route('/create_contest', methods=['GET', 'POST'])
@@ -166,8 +189,9 @@ def create_contest():
 
     permission = True
     return render_template('create_contest.html',
-                           type="Контест",
-                           create=permission)
+                           type="Создать контест",
+                           create=permission,
+                           current_id=current_user.id)
 
 
 @app.route('/results/<int:contest_id>')
@@ -177,36 +201,40 @@ def results():
     permission = False
     return render_template('results.html',
                            type="Результаты",
-                           create=permission)
+                           create=permission,
+                           current_id=current_user.id)
 
 
 @app.route('/task/<int:task_id>')
 def task(task_id):
-    """Задание"""
-    id = task_id
-    name = "Мышь"
-    question = "МЫШЬ МЫШ МЫШ"
-    input_data = [1, 2]
-    output_data = [3, 4]
+    """Задача"""
+    task = Task.get_task(task_id)
+    title = task.title
+    description = task.description
+    input_data = task.get_tests()
+    output_data = task.get_tests()
+
     permission = False
     return render_template('task.html',
                            type="Задача",
                            create=permission,
-                           name=name,
-                           question=question,
+                           title=title,
+                           question=description,
                            input_data=input_data,
                            output_data=output_data,
-                           id=id)
+                           current_id=current_user.id)
 
 
 @app.route('/settings/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-def settings():
+def settings(user_id):
     """Настройки"""
+
     permission = False
     return render_template('settings.html',
                            type="Настройки",
-                           create=permission)
+                           create=permission,
+                           current_id=current_user.id)
 
 
 @login_manager.user_loader
