@@ -6,6 +6,10 @@ from hashlib import sha3_256
 from json import load
 
 
+def _like(text: str) -> str:
+    return '%' + text + '%'
+
+
 class Test(SqlAlchemyBase):
     __tablename__ = 'tests'
 
@@ -140,14 +144,10 @@ class Task(SqlAlchemyBase):
         return session.query(Task).filter(Task.id == task_id).first()
 
     @staticmethod
-    def get_task_by_title(title: str):
+    def get_tasks_by_title(title: str):
         """Return [Task(**kwargs), ...] by title where Task.title like title"""
         session = create_session()
-        return session.query(Task).filter(Task.title.like(Task.__like(title))).all()
-
-    @staticmethod
-    def __like(text: str) -> str:
-        return '%' + text + '%'
+        return session.query(Task).filter(Task.title.like(_like(title))).all()
 
     @staticmethod
     def add_task(creator: int, title: str, description: str, reference: str) -> dict:
@@ -190,9 +190,93 @@ class Contest(SqlAlchemyBase):
     tasks = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     start_time = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     end_time = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
-    """Нужен метод add_contest(idшники задач)"""
 
-    """get_contest_by_title"""
+    def change_data(self, creators=None, title=None, description=None, tasks=None, start_time=None, end_time=None):
+        """
+        Change title/description/reference, return
+        {'status': 'ok'}
+        {'status': 'same task has already been added'}
+        {'status': 'no <user/task> with id '{id}''}
+        {'status': 'invalid <creators/tasks/title/description/start_time/end_time> type, expected <str/int/tuple/list> or None'}
+        """
+        try:
+            session = create_session()
+            assert type(creators) == tuple or type(creators) == list or creators is None, 'invalid creators type, expected list or tuple or None'
+            assert type(tasks) == tuple or type(tasks) == list or tasks is None, 'invalid tasks type, expected list or tuple or None'
+            assert type(title) == str or title is None, 'invalid title type, expected str or None'
+            assert type(description) == str or description is None, 'invalid description type, expected str or None'
+            assert type(start_time) == int or start_time is None, 'invalid start_time type, expected int or None'
+            assert type(end_time) == int or end_time is None, 'invalid end_time type, expected int or None'
+            for creator in ([] if creators is None else creators):
+                assert User.get_user(creator) is not None, f"no user with id '{creator}'"
+            for task in ([] if tasks is None else tasks):
+                assert Task.get_task(task) is not None, f"no task with id '{task}'"
+            assert len(session.query(Contest).filter(Contest.creators == (self.creators if creators is None else ','.join(creators)), Contest.title == (self.title if title is None else title), Contest.description == (self.description if description is None else description), Contest.tasks == (self.tasks if tasks is None else ','.join(tasks)), Contest.start_time == (self.start_time if start_time is None else start_time), Contest.end_time == (self.end_time if end_time is None else end_time)).all()) == 0, 'same contest has already been added'
+            contest = session.query(Contest).filter(Contest.id == self.id).first()
+            if creators is not None:
+                self.creators = contest.creators = ','.join(creators)
+            if title is not None:
+                self.title = contest.title = title
+            if description is not None:
+                self.description = contest.description = description
+            if tasks is not None:
+                self.tasks = contest.tasks = ','.join(tasks)
+            if start_time is not None:
+                self.start_time = contest.start_time = start_time
+            if end_time is not None:
+                self.end_time = contest.end_time = end_time
+            session.commit()
+            return {'status': 'ok'}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
+
+    @staticmethod
+    def get_contest(contest_id):
+        """Return Contest(**kwargs) by contest_id or None if id is invalid"""
+        session = create_session()
+        return session.query(Contest).filter(Contest.id == contest_id).first()
+
+    @staticmethod
+    def get_contest_by_title(title: str):
+        """Return [Contest(**kwargs), ...] by title where Contest.title like title"""
+        session = create_session()
+        return session.query(Contest).filter(Contest.title.like(_like(title))).all()
+
+    @staticmethod
+    def add_contest(creators: tuple, title: str, description: str, tasks: tuple, start_time: int, end_time: int) -> dict:
+        """
+        Add contest to database, return:
+        {'status': 'ok', 'id': int}
+        {'status': 'invalid <creators/title/descriptions/tasks/start_time/end_time> type, expected <str/int/list/tuple>'}
+        {'status': 'no <user/task> with id '<id>''}
+        {'status': 'same contest has already been added'}
+        """
+        try:
+            session = create_session()
+            assert type(creators) == tuple or type(creators) == list, 'invalid creators type, expected list or tuple'
+            assert type(tasks) == tuple or type(tasks) == list, 'invalid tasks type, expected list or tuple'
+            assert type(title) == str, 'invalid title type, expected str'
+            assert type(description) == str, 'invalid description type, expected str'
+            assert type(start_time) == int, 'invalid start_time type, expected int'
+            assert type(end_time) == int, 'invalid end_time type, expected int'
+            for creator in creators:
+                assert User.get_user(creator) is not None, f"no user with id '{creator}'"
+            for task in tasks:
+                assert Task.get_task(task) is not None, f"no task with id '{task}'"
+            assert len(session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).all()) == 0, 'same contest has already been added'
+            contest = Contest(
+                creators=','.join(creators),
+                title=title,
+                description=description,
+                tasks=','.join(tasks),
+                start_time=start_time,
+                end_time=end_time
+            )
+            session.add(contest)
+            session.commit()
+            return {'status': 'ok', 'id': session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).first().id}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
 
     def __repr__(self):
         return f"Contest(title='{self.title}', tasks='{self.tasks}')"
@@ -248,13 +332,19 @@ class User(SqlAlchemyBase, UserMixin):
             return {'status': ex.args[0]}
 
     @staticmethod
+    def get_users_by_username(username: str):
+        """Return [User(**kwargs), ...] by username where User.username like username"""
+        session = create_session()
+        return session.query(User).filter(User.username.like(_like(username))).all()
+
+    @staticmethod
     def get_user(user_id: int):
         """Return User(**kwargs) by user_id or None if id is invalid"""
         session = create_session()
         return session.query(User).filter(User.id == user_id).first()
 
     @staticmethod
-    def get_user_by_username(username: str, password: str):
+    def authorize_user(username: str, password: str):
         """Return User(**kwargs) by username and not hashed password or None if username or password is invalid"""
         session = create_session()
         return session.query(User).filter(User.username == username, User.password == User.__generate_password(password)).first()
