@@ -1,5 +1,28 @@
 {% extends "bar.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="../static/style/search_style.css" />
+      <div class="d1">
+      <form action="" method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <p>
+            {{ form.username.label }}<br>
+            {{ form.username(class="control") }}<br>
+            {% for error in form.username.errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+          <p>
+
+            {{ form.submit(type="submit", class="button") }}
+      </form>
+      </div>
+    <table>
+      <tr> <th>id</th>  <th>Имя</th> <th>Имя пользователя</th> <th>Фамилия</th></tr>
+        {% for person in people %}
+          <tr>
+            <td>{{ person[0] }}</td> <td><a href="/profile/{{ person[0] }}">{{ person[1] }}</a></td> <td>{{ person[2] }}</td> <td>{{ person[3] }}</td>
+          </tr>
+        {% endfor %}
+    </table>
 
 {% endblock %}

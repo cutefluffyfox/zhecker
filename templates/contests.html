@@ -1,14 +1,14 @@
 {% extends "bar.html" %}
 
 {% block content %}
-<link rel="stylesheet" href="../static/style/archive_style.css" />
+<link rel="stylesheet" href="../static/style/search_style.css" />
 
     <div class="d1">
       <form action="" method="post" novalidate>
-
+          {{ form.hidden_tag() }}
           <p>
             {{ form.title.label }}<br>
-            {{ form.title(class="form-control") }}<br>
+            {{ form.title(class="control") }}<br>
             {% for error in form.title.errors %}
                 <div class="alert alert-danger" role="alert">{{ error }}</div>
             {% endfor %}
@@ -18,7 +18,12 @@
     </div>
     <h1>Турниры:</h1>
 
-    {% for task in tasks %}
-        <div>{{task}}</div>
-    {% endfor %}
+    <table>
+      <tr><th>id</th>  <th>Назавние</th>  <th>Описание</th> <th>Начало</th> <th>Конец</th></tr>
+        {% for contest in contests %}
+          <tr>
+              <td>{{contest[0]}}</td> <td><a href="/task/{{contest[0]}}">{{contest[1]}}</a></td> <td>{{contest[2]}}</td> <td>{{contest[3]}}</td> <td>{{contest[4]}}</td>
+          </tr>
+        {% endfor %}
+    </table>
 {% endblock %}

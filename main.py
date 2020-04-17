@@ -57,7 +57,7 @@ def login():
         username = form.username.data
         password = form.password.data
         remember = form.remember_me.data
-        user = User.get_user_by_username(username, password)
+        user = User.authorize_user(username, password)
         login_user(user, remember=remember)
         return redirect('/contests')
 
@@ -81,18 +81,29 @@ def profile(user_id):
                            current_id=current_user.id)
 
 
-@app.route('/people')
+@app.route('/people', methods=['GET', 'POST'])
 @login_required
-def preople():
+def people():
     """Профиль"""
+    results = []
+    people = []
+    form = forms.PeopleSearch()
+    if form.validate_on_submit():
+        username = form.username.data
+        people = User.get_users_by_username(username)
 
-    permission = False
+    for result in people:
+        results.append([result.id, result.username, result.name, result.surname])
+
     return render_template('people.html',
-                           type="Профиль"
-)
+                           type="Люди",
+                           form=form,
+                           people=results,
+                           current_id=current_user.id)
 
 
 @app.route('/archive', methods=['GET', 'POST'])
+@login_required
 def archive():
     """Архив задач"""
     tasks = []
@@ -100,10 +111,11 @@ def archive():
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
-        tasks_info = Task.get_task_by_title(title)
+        tasks_info = Task.get_tasks_by_title(title)
 
     for i in tasks_info:
         tasks.append([i.id, i.title, i.description])
+    print(tasks)
     permission = True
     return render_template('archive.html',
                            type="Архив",
@@ -114,6 +126,7 @@ def archive():
 
 
 @app.route('/create_task', methods=['GET', 'POST'])
+@login_required
 def create_task():
     form = forms.CreateTask()
     if form.validate_on_submit():
@@ -132,6 +145,7 @@ def create_task():
                            current_id=current_user.id)
 
 @app.route('/system')
+@login_required
 def system():
     """О системе"""
     permission = False
@@ -147,18 +161,23 @@ def system():
 def contests():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
+    contests = []
+    contests_info = []
     form = forms.ContestSearch()
     if form.validate_on_submit():
         title = form.title.data
-        contests = Task.get_contest_by_title(title)
+        contests_info = Contest.get_contest_by_title(title)
 
-    tournaments = []
+    for i in contests_info:
+        contests.append([i.id, i.title, i.description, i.start_time, i.end_time])
+
+
     permission = True
     return render_template('contests.html',
                            type="Контесты",
                            create=permission,
                            name=current_user.username,
-                           tournaments=tournaments,
+                           tournaments=contests,
                            form=form,
                            current_id=current_user.id)
 
@@ -178,19 +197,30 @@ def contest(contest_id):
 
 
 @app.route('/create_contest', methods=['GET', 'POST'])
+@login_required
 def create_contest():
+
     form = forms.CreateContest()
     if form.validate_on_submit():
+        creators = form.creators.data.split(',')
         title = form.title.data
         description = form.description.data
-        tasks = form.tasks.data
-
-        return redirect('/archive')
+        tasks = form.tasks.data.split(',')
+        start_date = form.start_date.data
+        print(start_date)
+        start_time = form.start_time.data
+        print(start_time)
+        end_date = form.end_date.data
+        print(start_date)
+        end_time = form.end_time.data
+        print(end_time)
+        Contest.add_contest(creators, title, description, tasks, start_time, end_time)
 
     permission = True
     return render_template('create_contest.html',
                            type="Создать контест",
                            create=permission,
+                           form=form,
                            current_id=current_user.id)
 
 
@@ -206,6 +236,7 @@ def results():
 
 
 @app.route('/task/<int:task_id>')
+@login_required
 def task(task_id):
     """Задача"""
     task = Task.get_task(task_id)

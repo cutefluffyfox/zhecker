@@ -1,5 +1,64 @@
 {% extends "bar.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="../static/style/create_contest_style.css" />
+    <div class="d1">
+      <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+          {{ form.creators.label }}<br>
+          {{ form.creators(class="control") }}<br>
+          {% for error in form.creators.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
 
+        <p>
+          {{ form.title.label }}<br>
+          {{ form.title(class="control") }}<br>
+          {% for error in form.title.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+
+        <p>
+          {{ form.description.label }}<br>
+          {{ form.description(class="control") }}<br>
+          {% for error in form.description.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+
+        <p>
+          {{ form.tasks.label }}<br>
+          {{  form.tasks(class="control") }}<br>
+          {% for error in form.tasks.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+
+<!--Пофиксить горизонтальное положение таблицей-->
+
+        <p>
+          {{ form.start_date.label }}<br>
+          {{ form.start_date(class="control", type="date", id="date") }}<br>
+          {% for error in form.start_date.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+          {{ form.start_time(class="control", type="time", id="time") }}<br>
+          {% for error in form.start_time.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+
+        <p>
+          {{ form.end_date.label }}<br>
+          {{ form.end_date(class="control", type="date", id="date") }}<br>
+          {% for error in form.end_date.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+          {{ form.end_time(class="control", type="time", id="time") }}<br>
+          {% for error in form.end_time.errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endfor %}
+
+        <p>
+          {{ form.submit(type="submit", class="button") }}</p>
+      </form>
+    </div>
 {% endblock %}
