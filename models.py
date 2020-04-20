@@ -85,26 +85,30 @@ class Task(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     creator = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=False)
+    time_limit = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
     title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     description = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     reference = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     attempts = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     successful = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
-    def change_data(self, title=None, description=None, reference=None):
+    def change_data(self, time_limit=None, title=None, description=None, reference=None):
         """
-        Change title/description/reference, return
+        Change title/description/reference/time_limit, return
         {'status': 'ok'}
         {'status': 'same task has already been added'}
-        {'status': 'invalid <title/description/reference> type, expected str or None'}
+        {'status': 'invalid <title/description/reference/time_limit> type, expected <str/int/float> or None'}
         """
         try:
             session = create_session()
+            assert time_limit is None or type(time_limit) == int or type(time_limit) == float, 'invalid time_limit type, expected float or int or None'
             assert title is None or type(title) == str, 'invalid title type, expected str or None'
             assert description is None or type(description) == str, 'invalid description type, expected str or None'
             assert reference is None or type(reference) == str, 'invalid reference type, expected str or None'
-            assert len(session.query(Task).filter(Task.creator == self.creator, Task.title == (self.title if title is None else title), Task.description == (self.description if description is None else description), Task.reference == (self.reference if reference is None else reference)).all()) == 0, "same task has already been added"
+            assert len(session.query(Task).filter(Task.creator == self.creator, Task.time_limit == (self.time_limit if time_limit is None else time_limit), Task.title == (self.title if title is None else title), Task.description == (self.description if description is None else description), Task.reference == (self.reference if reference is None else reference)).all()) == 0, "same task has already been added"
             task = session.query(Task).filter(Task.id == self.id).first()
+            if time_limit is not None:
+                self.time_limit = task.time_limit = time_limit
             if title is not None:
                 self.title = task.title = title
             if description is not None:
@@ -120,6 +124,14 @@ class Task(SqlAlchemyBase):
         """Return [Test(**kwargs), ...] sorted by index (recent added at the back)"""
         session = create_session()
         return session.query(Test).filter(Test.task_id == self.id).order_by(sqlalchemy.desc(~Test.id)).all()
+
+    def add_attempt(self, successful=False):
+        """Add attempt + successful to database"""
+        session = create_session()
+        task = session.query(Task).filter(Task.id == self.id).first()
+        self.attempts = task.attempts = task.attempts + 1
+        self.successful = task.successful = task.successful + successful
+        session.commit()
 
     @staticmethod
     def get_all(sort_type='easy'):
@@ -150,29 +162,30 @@ class Task(SqlAlchemyBase):
         return session.query(Task).filter(Task.title.like(_like(title))).all()
 
     @staticmethod
-    def add_task(creator: int, title: str, description: str, reference: str) -> dict:
+    def add_task(creator: int, time_limit: float, title: str, description: str, reference: str) -> dict:
         """
         Add task to database, return:
         {'status': 'ok', 'id': int}
-        {'status': 'invalid <title/description/reference> type, expected str'}
+        {'status': 'invalid <time_limit/title/description/reference> type, expected <str/int/float>'}
         {'status': 'no user with id '<creator>''}
         {'status': 'same task has already been added'}
         """
         try:
             session = create_session()
-            user = session.query(User).filter(User.id == creator).first()
-            assert user is not None, f"no user with id '{creator}'"
+            assert User.get_user(creator) is not None, f"no user with id '{creator}'"
+            assert type(time_limit) == int or type(time_limit) == float, 'invalid time_limit type, expected int or float'
             assert type(title) == str, 'invalid title type, expected str'
             assert type(description) == str, 'invalid description type, expected str'
             assert type(reference) == str, 'invalid reference type, expected str'
-            assert len(session.query(Task).filter(Task.creator == creator, Task.title == title, Task.description == description, Task.reference == reference).all()) == 0, "same task has already been added"
+            assert len(session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).all()) == 0, "same task has already been added"
             task = Task(creator=creator,
+                        time_limit=time_limit,
                         title=title,
                         description=description,
                         reference=reference)
             session.add(task)
             session.commit()
-            return {'status': 'ok', 'id': session.query(Task).filter(Task.creator == creator, Task.title == title, Task.description == description, Task.reference == reference).first().id}
+            return {'status': 'ok', 'id': session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).first().id}
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
@@ -230,6 +243,10 @@ class Contest(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def get_tasks(self):
+        """Return [Task(**kwargs), ...]"""
+        return [Task.get_task(task_id) for task_id in map(int, self.tasks.split(','))]
+
     @staticmethod
     def get_contest(contest_id):
         """Return Contest(**kwargs) by contest_id or None if id is invalid"""
@@ -264,14 +281,12 @@ class Contest(SqlAlchemyBase):
             for task in tasks:
                 assert Task.get_task(task) is not None, f"no task with id '{task}'"
             assert len(session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).all()) == 0, 'same contest has already been added'
-            contest = Contest(
-                creators=','.join(creators),
-                title=title,
-                description=description,
-                tasks=','.join(tasks),
-                start_time=start_time,
-                end_time=end_time
-            )
+            contest = Contest(creators=','.join(creators),
+                              title=title,
+                              description=description,
+                              tasks=','.join(tasks),
+                              start_time=start_time,
+                              end_time=end_time)
             session.add(contest)
             session.commit()
             return {'status': 'ok', 'id': session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).first().id}
@@ -398,4 +413,13 @@ class Attempt(SqlAlchemyBase):
 
     def __repr__(self):
         return f"Attempt(score={self.score}, status='{self.status}')"
+
+
+class Trial:
+    __tablename__ = 'trial'
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    attempt_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("contests.id"), nullable=False)
+    test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tests.id"), nullable=False)
+    output = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
