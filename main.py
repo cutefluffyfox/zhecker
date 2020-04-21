@@ -7,6 +7,7 @@ import forms
 from models import User, Contest, Task
 from db_session import global_init
 
+
 import time
 import datetime
 
@@ -134,18 +135,26 @@ def archive():
 @app.route('/create_task', methods=['GET', 'POST'])
 @login_required
 def create_task():
+    reference = ""
+    tests = []
     form = forms.CreateTask()
+
+    if request.method == "POST":
+        if request.files:
+            reference = request.files["reference"]
+            reference = reference.read()
+            reference = reference.decode('utf-8')
+
+            tests = request.files["tests"]
+            tests = load(tests)
+
     if form.validate_on_submit():
         creator = current_user.id
         title = form.title.data
         description = form.description.data
-        reference = form.reference.data
         time_limit = form.time_limit.data
-        # tests = form.tests.data
-        print(creator, time_limit, title, description, reference)
-        Task.add_task(creator, time_limit, title, description, reference)
+        Task.add_task(creator, time_limit, title, description, reference, tests)
 
-        return redirect('/archive')
 
     permission = True
     return render_template('create_task.html',

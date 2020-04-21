@@ -39,9 +39,9 @@ class PeopleSearch(FlaskForm):
 class CreateTask(FlaskForm):
     title = StringField('Назавание задачи', validators=[DataRequired()])
     description = StringField('Описание задачи', validators=[DataRequired()])
-    reference = StringField('Файл с эталоном решения', validators=[DataRequired()])
+    reference = FileField('Файл с эталоном решения', validators=[DataRequired()])
     time_limit = FloatField('Оптимальное время прохождения тестов (секунды)', validators=[DataRequired()])
-    # tests = StringField('Файл с тестами', validators=[DataRequired()])
+    tests = FileField('Файл с тестами', validators=[DataRequired()])
     submit = SubmitField('Создать')
 
 
