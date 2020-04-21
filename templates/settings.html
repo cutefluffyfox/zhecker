@@ -1,5 +1,63 @@
 {% extends "bar.html" %}
 
 {% block content %}
+<form action="" method="post" novalidate>
+<link href="../static/style/create_task_style.css">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.username.label }}<br>
+        {{ form.username(class="form-control") }}<br>
+        {% for error in form.username.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
 
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(class="form-control") }}<br>
+        {% for error in form.password.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+    {{ form.email.label }}<br>
+    {{ form.email(class="form-control", type="email") }}<br>
+    {% for error in form.email.errors %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endfor %}
+
+    <p>
+        {{ form.name.label }}<br>
+        {{ form.name(class="form-control") }}<br>
+        {% for error in form.name.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.surname.label }}<br>
+        {{ form.surname(class="form-control") }}<br>
+        {% for error in form.surname.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.city.label }}<br>
+        {{ form.city(class="form-control") }}<br>
+        {% for error in form.city.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}
+</form>
 {% endblock %}

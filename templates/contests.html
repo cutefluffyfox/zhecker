@@ -22,7 +22,7 @@
       <tr><th>id</th>  <th>Назавние</th>  <th>Описание</th> <th>Начало</th> <th>Конец</th></tr>
         {% for contest in contests %}
           <tr>
-              <td>{{contest[0]}}</td> <td><a href="/task/{{contest[0]}}">{{contest[1]}}</a></td> <td>{{contest[2]}}</td> <td>{{contest[3]}}</td> <td>{{contest[4]}}</td>
+              <td>{{contest[0]}}</td> <td><a href="/contest/{{contest[0]}}">{{contest[1]}}</a></td> <td>{{contest[2]}}</td> <td>{{contest[3]}}</td> <td>{{contest[4]}}</td>
           </tr>
         {% endfor %}
     </table>

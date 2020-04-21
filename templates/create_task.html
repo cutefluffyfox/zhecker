@@ -20,11 +20,19 @@
       {% endfor %}
 
     <p>
+      {{ form.time_limit.label }}<br>
+      {{ form.time_limit(class="control") }}<br>
+      {% for error in form.time_limit.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
       {{ form.reference.label }}<br>
       {{ form.reference(type="file", class="form-control-file", id="photo") }}<br>
       {% for error in form.reference.errors %}
         <div class="alert alert-danger" role="alert">{{ error }}</div>
       {% endfor %}
+
     <p>
       {{ form.submit(type="submit", class="button") }}</p>
   </form>

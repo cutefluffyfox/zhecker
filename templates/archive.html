@@ -20,10 +20,10 @@
     <h1>Задачи:</h1>
 
     <table>
-      <tr> <th>id</th>  <th>Назавние</th>  <th>Описание</th> </tr>
+      <tr> <th>id</th>  <th>Назавние</th></tr>
         {% for task in tasks %}
           <tr>
-            <td>{{task[0]}}</td> <td><a href="/task/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
+            <td>{{task[0]}}</td> <td><a href="/task/{{task[0]}}">{{task[1]}}</a></td>
           </tr>
         {% endfor %}
     </table>

@@ -13,7 +13,7 @@ form {
 }
 
 input {
-  border-color RGB(33, 133, 207);
+  border-color: RGB(33, 133, 207);
   border-radius: 4px;
   height:2rem;
   width:15rem;
@@ -29,4 +29,12 @@ input {
 .button:hover {
   background-color: RGB(33, 133, 207);
   color: white;
+}
+
+#date {
+ width:8rem;
+}
+
+#time {
+ width:5rem;
 }

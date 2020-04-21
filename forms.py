@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, FileField, FloatField, TextAreaField
 from wtforms.validators import DataRequired
 
 
@@ -8,6 +8,7 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     name = StringField('Имя', validators=[DataRequired()])
     surname = StringField('Фамилия', validators=[DataRequired()])
+    email = StringField('Электронная почта', validators=[DataRequired()])
     city = StringField('Город')
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Регистрация')
@@ -38,13 +39,19 @@ class PeopleSearch(FlaskForm):
 class CreateTask(FlaskForm):
     title = StringField('Назавание задачи', validators=[DataRequired()])
     description = StringField('Описание задачи', validators=[DataRequired()])
-    reference = StringField('Эталон решения', validators=[DataRequired()])
+    reference = StringField('Файл с эталоном решения', validators=[DataRequired()])
+    time_limit = FloatField('Оптимальное время прохождения тестов (секунды)', validators=[DataRequired()])
+    # tests = StringField('Файл с тестами', validators=[DataRequired()])
     submit = SubmitField('Создать')
-    """Тесты как будут подавать сам сделай пж(файлами/не файлами...)"""
+
+
+class SubmitTask(FlaskForm):
+    file = FileField("Загрузить файл", validators=[DataRequired()])
+    code = TextAreaField("Ваш код", validators=[DataRequired()])
+    submit = SubmitField('Создать')
 
 
 class CreateContest(FlaskForm):
-    """не знаю, как записать запись добавление нескольктх задач"""
     creators = StringField('Создатели  (id через запятую)', validators=[DataRequired()])
     title = StringField('Назавание турнира', validators=[DataRequired()])
     description = StringField('Описание турнира', validators=[DataRequired()])
@@ -55,3 +62,12 @@ class CreateContest(FlaskForm):
     end_time = StringField('Конец', validators=[DataRequired()])
     submit = SubmitField('Создать', validators=[DataRequired()])
 
+
+class ChangeSettings(FlaskForm):
+    username = StringField('Новый логин')
+    email = StringField('Новая электронная почта')
+    password = PasswordField('Новый пароль')
+    name = StringField('Новое имя')
+    surname = StringField('Новая фамилия')
+    city = StringField('Новый город')
+    submit = SubmitField('Изменить')

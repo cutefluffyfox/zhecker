@@ -1,11 +1,14 @@
 from json import load
 
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
 from models import User, Contest, Task
 from db_session import global_init
+
+import time
+import datetime
 
 global_init('database.db')
 app = Flask(__name__)
@@ -30,19 +33,22 @@ def register():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
+        email = form.email.data
         name = form.name.data
         surname = form.surname.data
         city = form.city.data
         remember = form.remember_me.data
-        user_id = User.add_user(username=username,
+        new_user = User.add_user(username=username,
                                 password=password,
-                                email='@ADD@',
+                                email=email,
                                 name=name,
                                 surname=surname,
                                 city=city)
-        user = User.get_user(user_id)
-        login_user(user, remember=remember)
-        return redirect('/contests')
+
+        if new_user.get("status") == "ok":
+            user = User.get_user(new_user.get('id'))
+            login_user(user, remember=remember)
+            return redirect('/contests')
 
     return render_template('register.html',
                            form=form)
@@ -130,10 +136,14 @@ def archive():
 def create_task():
     form = forms.CreateTask()
     if form.validate_on_submit():
+        creator = current_user.id
         title = form.title.data
         description = form.description.data
         reference = form.reference.data
-        Task.add_task(current_user.id, title, description, reference)
+        time_limit = form.time_limit.data
+        # tests = form.tests.data
+        print(creator, time_limit, title, description, reference)
+        Task.add_task(creator, time_limit, title, description, reference)
 
         return redirect('/archive')
 
@@ -169,7 +179,11 @@ def contests():
         contests_info = Contest.get_contest_by_title(title)
 
     for i in contests_info:
-        contests.append([i.id, i.title, i.description, i.start_time, i.end_time])
+        contests.append([i.id,
+                         i.title,
+                         i.description,
+                         datetime.datetime.fromtimestamp(i.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+                         datetime.datetime.fromtimestamp(i.end_time).strftime('%Y-%m-%d %H:%M:%S'),])
 
 
     permission = True
@@ -177,7 +191,7 @@ def contests():
                            type="Контесты",
                            create=permission,
                            name=current_user.username,
-                           tournaments=contests,
+                           contests=contests,
                            form=form,
                            current_id=current_user.id)
 
@@ -186,14 +200,23 @@ def contests():
 @login_required
 def contest(contest_id):
     """Турнир"""
-    tasks = []
-    id = contest_id
+
+
+    contest = Contest.get_contest(contest_id)
+    print(contest)
+    tasks = contest.get_tasks()
+    results = []
+    for i in tasks:
+        results.append([i.id, i.title])
+    print(results)
+
     permission = False
     return render_template('contest.html',
-                           type="Турнир",
+                           type="Контест",
                            create=permission,
-                           tasks=tasks,
-                           current_id=current_user.id)
+                           tasks=results,
+                           current_id=current_user.id,
+                           contest_id=contest_id)
 
 
 @app.route('/create_contest', methods=['GET', 'POST'])
@@ -202,19 +225,26 @@ def create_contest():
 
     form = forms.CreateContest()
     if form.validate_on_submit():
-        creators = form.creators.data.split(',')
+        creators = tuple(form.creators.data.split(','))
         title = form.title.data
         description = form.description.data
-        tasks = form.tasks.data.split(',')
+        tasks = tuple(str(form.tasks.data).split(','))
+
         start_date = form.start_date.data
-        print(start_date)
-        start_time = form.start_time.data
-        print(start_time)
+        start_time = form.start_time.data + ":00"
+        start = f"{start_date} {start_time}"
+        start = time.strptime(start, "%Y-%m-%d %H:%M:%S")
+        start = int(time.mktime(start))
+
         end_date = form.end_date.data
-        print(start_date)
-        end_time = form.end_time.data
-        print(end_time)
-        Contest.add_contest(creators, title, description, tasks, start_time, end_time)
+        end_time = form.end_time.data + ":00"
+        end = f"{end_date} {end_time}"
+        end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
+        end = int(time.mktime(end))
+
+        print(creators, title, description, tasks, start, end)
+
+        Contest.add_contest(creators, title, description, tasks, start, end)
 
     permission = True
     return render_template('create_contest.html',
@@ -226,13 +256,14 @@ def create_contest():
 
 @app.route('/results/<int:contest_id>')
 @login_required
-def results():
+def results(contest_id):
     """Результаты"""
     permission = False
     return render_template('results.html',
                            type="Результаты",
                            create=permission,
-                           current_id=current_user.id)
+                           current_id=current_user.id,
+                           contest_id=contest_id)
 
 
 @app.route('/task/<int:task_id>')
@@ -256,15 +287,42 @@ def task(task_id):
                            current_id=current_user.id)
 
 
-@app.route('/settings/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/settings', methods=['GET', 'POST'])
 @login_required
-def settings(user_id):
+def settings():
     """Настройки"""
+    form = forms.ChangeSettings()
+
+    if request.method == "GET":
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+        form.name.data = current_user.name
+        form.surname.data = current_user.surname
+        form.city .data = current_user.city
+
+    if form.validate_on_submit():
+        new_username = form.username.data
+        new_email = form.email.data
+        new_password = form.password.data
+        new_name = form.name.data
+        new_surname = form.surname.data
+        new_city = form.city.data
+
+        User.get_user(current_user.id).change_data(username=new_username if new_username != current_user.username else None,
+                                                   email=new_email if new_email != current_user.email else None,
+                                                   name=new_name if new_name != current_user.name else None,
+                                                   surname=new_surname if new_surname != current_user.surname else None,
+                                                   city=new_city if new_city != current_user.city else None,
+                                                   password=new_password if new_password != current_user.password else None)
+
+        print(new_username, new_email, new_name, new_surname, new_city, new_password)
+        print(User.get_user(current_user.id).change_data(new_username, new_email, new_name, new_surname, new_city, new_password))
 
     permission = False
     return render_template('settings.html',
                            type="Настройки",
                            create=permission,
+                           form=form,
                            current_id=current_user.id)
 
 

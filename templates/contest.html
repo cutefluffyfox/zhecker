@@ -1,7 +1,15 @@
 {% extends "bar.html" %}
 
 {% block content %}
-    {% for task in tasks %}
-        <h3>{{task}}</h3>
-    {% endfor %}
+
+    <h1>Задачи турнира:</h1>
+
+    <table>
+      <tr> <th>id</th> <th>Назавние</th> <th>Статус</th></tr>
+        {% for task in tasks %}
+          <tr>
+            <td>{{task[0]}}</td> <td><a href="/task/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
+          </tr>
+        {% endfor %}
+    </table>
 {% endblock %}

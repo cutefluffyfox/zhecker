@@ -282,7 +282,7 @@
         </li>
 <!--НАСТРОЙКИ-->
         <li class="nav-item">
-              <a href="/settings/{{current_id}}" class="nav-link">
+              <a href="/settings" class="nav-link">
                   <svg height="512pt"
                        viewBox="0 0 512 512"
                        width="512pt"
@@ -529,9 +529,9 @@
           {% endif %}
     <!--РЕЗУЛЬТАТЫ-->
     <!--ЗАДАЧИ-->
-        {% if type == "Контест" or type == "Задача" %}
+        {% if type == "Контест" or type == "Результаты" %}
           <li class="nav-item">
-            <a href="/contest>" class="nav-link">
+            <a href="/contest/{{contest_id}}" class="nav-link">
               <svg version="1.1"
                  id="Capa_1"
                  xmlns="http://www.w3.org/2000/svg"
@@ -608,7 +608,7 @@
           </li>
 
           <li class="nav-item">
-              <a href="/results>" class="nav-link">
+              <a href="/results/{{contest_id}}" class="nav-link">
                 <svg version="1.1" id="Layer_1"
                       xmlns="http://www.w3.org/2000/svg"
                       x="0px"
