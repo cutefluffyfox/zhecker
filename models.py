@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from random import randint
 from hashlib import sha3_256
 from json import load
+from time import time
 
 
 def _like(text: str) -> str:
@@ -66,11 +67,10 @@ class Test(SqlAlchemyBase):
             assert type(out) == str, 'invalid output type, expected str'
             assert points is None or type(points) == int, 'invalid points type, expected int'
             assert len(session.query(Test).filter(Test.task_id == task_id, Test.input == inp, Test.output == out).all()) == 0, 'same test has already been added'
-            test = Test(task_id=task_id,
-                        input=inp,
-                        output=out,
-                        points=points)
-            session.add(test)
+            session.add(Test(task_id=task_id,
+                             input=inp,
+                             output=out,
+                             points=points))
             session.commit()
             return {'status': 'ok', 'id': session.query(Test).filter(Test.task_id == task_id, Test.input == inp, Test.output == out).first().id}
         except AssertionError as ex:
@@ -125,8 +125,12 @@ class Task(SqlAlchemyBase):
         session = create_session()
         return session.query(Test).filter(Test.task_id == self.id).order_by(sqlalchemy.desc(~Test.id)).all()
 
+    def add_test(self, inp: str, out: str, points=None):
+        """Add test to database by using Test.add_test(**kwargs)"""
+        return Test.add_test(task_id=self.id, inp=inp, out=out, points=points)
+
     def add_attempt(self, successful=False):
-        """Add attempt + successful to database"""
+        """Add attempt and successful to database"""
         session = create_session()
         task = session.query(Task).filter(Task.id == self.id).first()
         self.attempts = task.attempts = task.attempts + 1
@@ -162,11 +166,11 @@ class Task(SqlAlchemyBase):
         return session.query(Task).filter(Task.title.like(_like(title))).all()
 
     @staticmethod
-    def add_task(creator: int, time_limit: float, title: str, description: str, reference: str) -> dict:
+    def add_task(creator: int, time_limit: float, title: str, description: str, reference: str, tests=None) -> dict:
         """
         Add task to database, return:
-        {'status': 'ok', 'id': int}
-        {'status': 'invalid <time_limit/title/description/reference> type, expected <str/int/float>'}
+        {'status': 'ok', 'id': int, 'tests_statuses': list}
+        {'status': 'invalid <time_limit/title/description/reference/tests> type, expected <str/int/float/list/tuple/None>'}
         {'status': 'no user with id '<creator>''}
         {'status': 'same task has already been added'}
         """
@@ -177,15 +181,20 @@ class Task(SqlAlchemyBase):
             assert type(title) == str, 'invalid title type, expected str'
             assert type(description) == str, 'invalid description type, expected str'
             assert type(reference) == str, 'invalid reference type, expected str'
+            assert tests is None or type(tests) == list or type(tests) == tuple, 'invalid tests type, expected list, tuple or None'
+            assert tests is None or all(map(lambda a: type(a) == dict, tests)), 'invalid tests[index] type, expected dict'
             assert len(session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).all()) == 0, "same task has already been added"
-            task = Task(creator=creator,
-                        time_limit=time_limit,
-                        title=title,
-                        description=description,
-                        reference=reference)
-            session.add(task)
+            session.add(Task(creator=creator,
+                             time_limit=time_limit,
+                             title=title,
+                             description=description,
+                             reference=reference))
             session.commit()
-            return {'status': 'ok', 'id': session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).first().id}
+            task_id = session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).first().id
+            tests_statuses = []
+            for test in (tests if tests is not None else []):
+                tests_statuses.append(Test.add_test(task_id=task_id, inp=test.get('input'), out=test.get('output'), points=test.get('points')))
+            return {'status': 'ok', 'id': task_id, 'tests_statuses': tests_statuses}
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
@@ -247,6 +256,10 @@ class Contest(SqlAlchemyBase):
         """Return [Task(**kwargs), ...]"""
         return [Task.get_task(task_id) for task_id in map(int, self.tasks.split(','))]
 
+    def get_creators(self):
+        """Return [User(**kwargs), ...]"""
+        return [User.get_user(user_id) for user_id in map(int, self.creators.split(','))]
+
     @staticmethod
     def get_contest(contest_id):
         """Return Contest(**kwargs) by contest_id or None if id is invalid"""
@@ -281,13 +294,12 @@ class Contest(SqlAlchemyBase):
             for task in tasks:
                 assert Task.get_task(task) is not None, f"no task with id '{task}'"
             assert len(session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).all()) == 0, 'same contest has already been added'
-            contest = Contest(creators=','.join(creators),
-                              title=title,
-                              description=description,
-                              tasks=','.join(tasks),
-                              start_time=start_time,
-                              end_time=end_time)
-            session.add(contest)
+            session.add(Contest(creators=','.join(creators),
+                                title=title,
+                                description=description,
+                                tasks=','.join(tasks),
+                                start_time=start_time,
+                                end_time=end_time))
             session.commit()
             return {'status': 'ok', 'id': session.query(Contest).filter(Contest.creators == ','.join(creators), Contest.title == title, Contest.description == description, Contest.tasks == ','.join(tasks), Contest.start_time == start_time, Contest.end_time == end_time).first().id}
         except AssertionError as ex:
@@ -366,6 +378,7 @@ class User(SqlAlchemyBase, UserMixin):
 
     @staticmethod
     def __generate_password(password: str) -> str:
+        """Return hashed password by password"""
         return sha3_256((password + load(open('config.json', 'r', encoding='UTF-8'))['SALT']).encode('UTF-8')).hexdigest()
 
     @staticmethod
@@ -373,7 +386,7 @@ class User(SqlAlchemyBase, UserMixin):
         """
         Add user to database, return:
         {'status': 'ok', 'id': int}
-        {'status': 'invalid <password/name/surname> type, expected str'}
+        {'status': 'invalid <password/name/surname/city> type, expected <str/None>'}
         {'status': '<username/email> is already taken'}
         """
         try:
@@ -381,6 +394,7 @@ class User(SqlAlchemyBase, UserMixin):
             assert type(password) == str, 'invalid password type, expected str'
             assert type(name) == str, 'invalid name type, expected str'
             assert type(surname) == str, 'invalid surname type, expected str'
+            assert city is None or type(city) == str, 'invalid city type, expected str or None'
             assert len(session.query(User).filter(User.username == username).all()) == 0, 'username is already taken'
             assert len(session.query(User).filter(User.email == email).all()) == 0, 'email is already taken'
             session.add(User(username=username,
@@ -407,19 +421,117 @@ class Attempt(SqlAlchemyBase):
     task_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.id"), nullable=False)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=False)
     solution = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    score = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    status = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     time = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    score = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    status = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
+    def change_data(self, score=None, status=None):
+        """
+        Change score/status, return
+        {'status': 'ok'}
+        {'status': 'invalid <score/status> type, expected <str/int> or None'}
+        """
+        try:
+            session = create_session()
+            assert score is None or type(score) == int, 'invalid score type, expected int or None'
+            assert status is None or type(status) == str, 'invalid status type, expected str or None'
+            attempt = session.query(Attempt).filter(Attempt.id == self.id).first()
+            if score is not None:
+                self.score = attempt.score = score
+            if status is not None:
+                self.status = attempt.status = status
+            session.commit()
+            return {'status': 'ok'}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
+
+    @staticmethod
+    def get_attempt(attempt_id: int):
+        """Return Attempt(**kwargs) by attempt_id or None if id is invalid"""
+        session = create_session()
+        return session.query(Attempt).filter(Attempt.id == attempt_id).first()
+
+    @staticmethod
+    def add_attempt(contest_id: int, task_id: int, user_id: int, solution: str):
+        """
+        Add attempt to database, return:
+        {'status': 'ok', 'id': int}
+        {'status': 'invalid <contest_id/task_id/user_id/solution> type, expected <str/int>'}
+        {'status': 'no <contest/task/user> with id '<id>''}
+        {'status': 'the same solution has already been sent'}
+        """
+        try:
+            session = create_session()
+            assert type(contest_id) == int, 'invalid contest_id type, expected int'
+            assert type(task_id) == int, 'invalid task_id type, expected int'
+            assert type(user_id) == int, 'invalid user_id type, expected int'
+            assert type(solution) == str, 'invalid solution type, expected str'
+            assert Contest.get_contest(contest_id) is not None, f"no contest with id '{contest_id}'"
+            assert Task.get_task(task_id) is not None, f"no task with id '{task_id}'"
+            assert User.get_user(user_id) is not None, f"no user with id '{user_id}'"
+            assert len(session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id, Attempt.solution == solution).all()) == 0, 'the same solution has already been sent'
+            session.add(Attempt(contest_id=contest_id,
+                                task_id=task_id,
+                                user_id=user_id,
+                                solution=solution,
+                                time=int(time())))
+            session.commit()
+            return {'status': 'ok', 'id': session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id, Attempt.solution == solution).first().id}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
 
     def __repr__(self):
         return f"Attempt(score={self.score}, status='{self.status}')"
 
 
-class Trial:
+class Trial(SqlAlchemyBase):
     __tablename__ = 'trial'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    attempt_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("contests.id"), nullable=False)
+    attempt_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("attempts.id"), nullable=False)
     test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tests.id"), nullable=False)
-    output = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    status = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    output = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
+    @staticmethod
+    def get_attempt_trials(attempt_id: int):
+        """Return [Trial(**kwargs), ...] by attempt id"""
+        session = create_session()
+        return session.query(Trial).filter(Trial.attempt_id == attempt_id).all()
+
+    @staticmethod
+    def get_trial(trial_id: int):
+        """Return Trial(**kwargs) by trial_id or None if id is invalid"""
+        session = create_session()
+        return session.query(Trial).filter(Trial.id == trial_id).first()
+
+    @staticmethod
+    def add_trial(attempt_id: int, test_id: int, status: str, output=None):
+        """
+        Add attempt_id, test_id, status, output to database, return:
+        {'status': 'ok', 'id': int}
+        {'status': 'invalid <attempt_id/tesk_id/status/output> type, expected <str/int/None>'}
+        {'status': 'no <attempt/test> with id '<id>''}
+        {'status': 'same trial has already been added'}
+        """
+        try:
+            session = create_session()
+            assert type(attempt_id) == int, 'invalid attempt_id type, expected int'
+            assert type(test_id) == int, 'invalid test_id type, expected int'
+            assert type(status) == str, 'invalid status type, expected int'
+            assert output is None or type(output) == str, 'invalid output type, expected str or None'
+            assert Attempt.get_attempt(attempt_id) is not None, f"no attempt with id '{attempt_id}'"
+            assert Test.get_test(test_id) is not None, f"no test with id '{test_id}'"
+            assert len(session.query(Trial).filter(Trial.attempt_id == attempt_id, Trial.test_id == test_id, Trial.status == status, Trial.output == output).all()) == 0, 'same trial has already been added'
+            session.add(Trial(attempt_id=attempt_id,
+                              test_id=test_id,
+                              status=status,
+                              output=output))
+            session.commit()
+            return {'status': 'ok', 'id': session.query(Trial).filter(Trial.attempt_id == attempt_id, Trial.test_id == test_id, Trial.status == status, Trial.output == output).first().id}
+        except AssertionError as ex:
+            return {'status': ex.args[0]}
+
+    def __repr__(self):
+        return f"Trial(output='{self.output}', status='{self.status}')"
 
