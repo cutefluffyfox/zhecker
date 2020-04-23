@@ -11,7 +11,7 @@ class RegisterForm(FlaskForm):
     email = StringField('Электронная почта', validators=[DataRequired()])
     city = StringField('Город')
     remember_me = BooleanField('Запомнить меня')
-    submit = SubmitField('Регистрация')
+    submit = SubmitField('Готово')
 
 
 class LoginForm(FlaskForm):
@@ -42,13 +42,13 @@ class CreateTask(FlaskForm):
     reference = FileField('Файл с эталоном решения', validators=[DataRequired()])
     time_limit = FloatField('Оптимальное время прохождения тестов (секунды)', validators=[DataRequired()])
     tests = FileField('Файл с тестами', validators=[DataRequired()])
-    submit = SubmitField('Создать')
+    submit = SubmitField('Готово')
 
 
 class SubmitTask(FlaskForm):
     file = FileField("Загрузить файл", validators=[DataRequired()])
     code = TextAreaField("Ваш код", validators=[DataRequired()])
-    submit = SubmitField('Создать')
+    submit = SubmitField('Готово')
 
 
 class CreateContest(FlaskForm):
@@ -60,14 +60,4 @@ class CreateContest(FlaskForm):
     start_time = StringField('Начало', validators=[DataRequired()])
     end_date = StringField('Конец', validators=[DataRequired()])
     end_time = StringField('Конец', validators=[DataRequired()])
-    submit = SubmitField('Создать', validators=[DataRequired()])
-
-
-class ChangeSettings(FlaskForm):
-    username = StringField('Новый логин')
-    email = StringField('Новая электронная почта')
-    password = PasswordField('Новый пароль')
-    name = StringField('Новое имя')
-    surname = StringField('Новая фамилия')
-    city = StringField('Новый город')
-    submit = SubmitField('Изменить')
+    submit = SubmitField('Готово', validators=[DataRequired()])
