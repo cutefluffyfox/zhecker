@@ -8,7 +8,10 @@
     <tr> <th>Ввод</th>  <th>Вывод</th> </tr>
     {% for i in range(input_data| length) %}
       <tr>
-        <td>{{input_data[i]}}</td> <td>{{output_data[i]}}</td>
+
+        <td> {% for j in  input_data[i]%} {{ j }} <br> {% endfor %}</td>
+        <td> {% for z in  output_data[i]%} {{ z }} <br> {% endfor %}</td>
+
       </tr>
     {% endfor %}
   </table><br>

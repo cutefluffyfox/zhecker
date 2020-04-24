@@ -44,6 +44,14 @@ class CreateTask(FlaskForm):
     tests = FileField('Файл с тестами', validators=[DataRequired()])
     submit = SubmitField('Готово')
 
+class EditTask(FlaskForm):
+    title = StringField('Назавание задачи')
+    description = StringField('Описание задачи')
+    reference = FileField('Файл с эталоном решения')
+    time_limit = FloatField('Оптимальное время прохождения тестов (секунды)')
+    tests = FileField('Файл с тестами')
+    submit = SubmitField('Готово')
+
 
 class SubmitTask(FlaskForm):
     file = FileField("Загрузить файл", validators=[DataRequired()])
@@ -61,3 +69,14 @@ class CreateContest(FlaskForm):
     end_date = StringField('Конец', validators=[DataRequired()])
     end_time = StringField('Конец', validators=[DataRequired()])
     submit = SubmitField('Готово', validators=[DataRequired()])
+
+
+class ChangeSettings(FlaskForm):
+    username = StringField('Логин')
+    password = PasswordField('Пароль')
+    name = StringField('Имя')
+    surname = StringField('Фамилия')
+    email = StringField('Электронная почта')
+    city = StringField('Город')
+    remember_me = BooleanField('Запомнить меня')
+    submit = SubmitField('Готово')

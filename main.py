@@ -7,7 +7,6 @@ import forms
 from models import User, Contest, Task
 from db_session import global_init
 
-
 import time
 import datetime
 
@@ -132,12 +131,47 @@ def archive():
                            current_id=current_user.id)
 
 
+@app.route('/task/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def task(task_id):
+    """Задача"""
+    task = Task.get_task(task_id)
+    title = task.title
+    description = task.description
+    data = task.get_tests()[:2]
+    print(data)
+    input_data = []
+    output_data = []
+    output_data = []
+    print(task.id)
+    for i in data:
+        input_data.append(i.input.split("\n"))
+        output_data.append(i.output.split("\n"))
+
+    edit = False
+    print(task.creator, current_user.id)
+    if task.creator == current_user.id:
+        edit = True
+
+    permission = False
+    return render_template('task.html',
+                           type="Задача",
+                           create=permission,
+                           title=title,
+                           question=description,
+                           input_data=input_data,
+                           output_data=output_data,
+                           task_edit=edit,
+                           task_id=task_id,
+                           current_id=current_user.id)
+
+
 @app.route('/create_task', methods=['GET', 'POST'])
 @login_required
 def create_task():
     reference = ""
     tests = []
-    form = forms.CreateTask()
+    form = forms.EditTask()
 
     if request.method == "POST":
         if request.files:
@@ -146,14 +180,15 @@ def create_task():
             reference = reference.decode('utf-8')
 
             tests = request.files["tests"]
-            tests = load(tests)
+            if tests:
+                tests = load(tests)
 
     if form.validate_on_submit():
         creator = current_user.id
         title = form.title.data
         description = form.description.data
         time_limit = form.time_limit.data
-        Task.add_task(creator, time_limit, title, description, reference, tests)
+        print(Task.add_task(creator, time_limit, title, description, reference, tests))
 
 
     permission = True
@@ -162,6 +197,58 @@ def create_task():
                            create=permission,
                            form=form,
                            current_id=current_user.id)
+
+
+@app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def edit_task(task_id):
+    task = Task.get_task(task_id)
+    form = forms.EditTask()
+
+    new_reference = ""
+    new_tests = []
+
+    if request.method == "GET":
+        print("GET success")
+        form.title.data = task.title
+        form.time_limit.data = task.time_limit
+        form.description.data = task.description
+
+    if request.method == "POST":
+        print("POST success")
+        if request.files:
+            reference = request.files["reference"]
+            reference = reference.read()
+            new_reference = reference.decode('utf-8')
+            #
+            # tests = request.files["tests"]
+            # new_tests = load(tests)
+            # print(new_tests)
+
+    if form.validate_on_submit():
+        print("VALIDATE success")
+        new_title = form.title.data
+        new_description = form.description.data
+        new_time_limit = form.time_limit.data
+        print(task.change_data(time_limit=new_time_limit if new_time_limit != task.time_limit else None,
+                         title=new_title if new_title != task.title else None,
+                         description=new_description if new_description != task.description else None,
+                         reference=new_reference if new_reference != task.reference else None))
+                         # tests=new_tests if new_tests is not None else None
+
+    edit = False
+    if task.creator == current_user.id:
+        edit = True
+
+    create = True  #доделать проверку на возсожность создавать задачи
+    return render_template('edit_task.html',
+                           type="Изменить задачу",
+                           create=create,
+                           form=form,
+                           task_id=task_id,
+                           task_edit=edit,
+                           current_id=current_user.id)
+
 
 @app.route('/system')
 @login_required
@@ -191,7 +278,7 @@ def contests():
                          i.title,
                          i.description,
                          datetime.datetime.fromtimestamp(i.start_time).strftime('%Y-%m-%d %H:%M:%S'),
-                         datetime.datetime.fromtimestamp(i.end_time).strftime('%Y-%m-%d %H:%M:%S'),])
+                         datetime.datetime.fromtimestamp(i.end_time).strftime('%Y-%m-%d %H:%M:%S')])
 
 
     permission = True
@@ -246,7 +333,6 @@ def edit_contest(contest_id):
         form.description.data = contest.description
         form.tasks.data = ",".join(list(contest.tasks))
 
-
         start = datetime.datetime.fromtimestamp(contest.start_time).strftime('%Y-%m-%d %H:%M:%S').split()
         form.start_date.data = start[0]  #нужно распарсить аремя на date и time
         form.start_time.data = start[1]
@@ -276,12 +362,12 @@ def edit_contest(contest_id):
         new_end = int(time.mktime(end))
         print(new_start, new_end)
 
-        contest.change_data(creators=new_creators if new_creators != contest.creators else None,
+        print(contest.change_data(creators=new_creators if new_creators != contest.creators else None,
                             title=new_title if new_title != contest.title else None,
                             description=new_description if new_description != contest.description else None,
                             tasks=new_tasks if new_tasks != contest.tasks else None,
                             start_time=new_start if new_start != contest.start_time else None,
-                            end_time=new_end if new_end != contest.end_time else None)
+                            end_time=new_end if new_end != contest.end_time else None))
 
     edit = False
     print(current_user.id, contest.creators)
@@ -306,7 +392,6 @@ def create_contest():
         creators = creators.replace(" ", "")
         creators = tuple(creators.split(','))
 
-
         title = form.title.data
         description = form.description.data
         tasks = tuple(str(form.tasks.data).split(','))
@@ -325,7 +410,7 @@ def create_contest():
 
         print(creators, title, description, tasks, start, end)
 
-        Contest.add_contest(creators, title, description, tasks, start, end)
+        print(Contest.add_contest(creators, title, description, tasks, start, end))
 
     permission = True
     return render_template('create_contest.html',
@@ -355,96 +440,11 @@ def results(contest_id):
                            contest_id=contest_id)
 
 
-@app.route('/task/<int:task_id>', methods=['GET', 'POST'])
-@login_required
-def task(task_id):
-    """Задача"""
-    task = Task.get_task(task_id)
-    title = task.title
-    description = task.description
-    data = task.get_tests()[:2]
-    print(data)
-    input_data = []
-    output_data = []
-    print(task.id)
-    for i in data:
-        input_data.append(i.input)
-        output_data.append(i.output)  #перевести парс на фронт в task.html
-
-    output_data = ["8 \n 6", "7 \n 8"]
-
-    edit = False
-    print(task.creator, current_user.id)
-    if task.creator == current_user.id:
-        edit = True
-
-    permission = False
-    return render_template('task.html',
-                           type="Задача",
-                           create=permission,
-                           title=title,
-                           question=description,
-                           input_data=input_data,
-                           output_data=output_data,
-                           task_edit=edit,
-                           task_id=task_id,
-                           current_id=current_user.id)
-
-
-@app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
-@login_required
-def edit_task(task_id):
-    task = Task.get_task(task_id)
-    form = forms.CreateTask()
-
-    new_reference = ""
-    new_tests = []
-
-    if request.method == "GET":
-        form.title.data = task.title
-        form.time_limit.data = task.time_limit
-        form.description.data = task.description
-
-
-    if request.method == "POST":
-        if request.files:
-            reference = request.files["reference"]
-            reference = reference.read()
-            new_reference = reference.decode('utf-8')
-
-            tests = request.files["tests"]
-            new_tests = load(tests)
-
-    if form.validate_on_submit():
-        new_title = form.title.data
-        new_description = form.description.data
-        new_time_limit = form.time_limit.data
-        task.change_data(time_limit=new_time_limit if new_time_limit != task.time_limit else None,
-                         title=new_title if new_title != task.title else None,
-                         description=new_description if new_description != task.description else None,
-                         reference=new_reference if new_reference != task.reference else None,
-                         tests=new_tests if new_tests != task.tests else None)
-
-    edit = False
-    print(task.creator, current_user.id)
-    if task.creator == current_user.id:
-        edit = True
-
-    create = True  #доделать проверку на возсожность создавать задачи
-    return render_template('edit_task.html',
-                           type="Изменить задачу",
-                           create=create,
-                           form=form,
-                           task_id=task_id,
-                           task_edit=edit,
-                           current_id=current_user.id)
-
-
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     """Настройки"""
-    form = forms.RegisterForm()
+    form = forms.ChangeSettings()
 
     if request.method == "GET":
         form.username.data = current_user.username
@@ -482,5 +482,6 @@ def settings():
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user(user_id)
+
 
 app.run()
