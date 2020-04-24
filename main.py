@@ -4,13 +4,14 @@ from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
-from models import User, Contest, Task
+from models import User, Contest, Task, __init__
 from db_session import global_init
 
 import time
 import datetime
 
 global_init('database.db')
+__init__()
 app = Flask(__name__)
 with open('config.json', 'r') as file:
     app.config['SECRET_KEY'] = load(file)['APP_KEY']

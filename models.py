@@ -5,6 +5,14 @@ from random import randint
 from hashlib import sha3_256
 from json import load
 from time import time
+from test_system import Checker
+
+
+def __init__():
+    session = create_session()
+    if Contest.get_contest(contest_id=0) is None:
+        session.add(Contest(id=0, creators='', title='Tasks', description='Contest with all tasks', start_time=0, end_time=pow(2, 63) - 1, tasks=''))
+        session.commit()
 
 
 def _like(text: str) -> str:
@@ -20,24 +28,25 @@ class Test(SqlAlchemyBase):
     output = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     points = sqlalchemy.Column(sqlalchemy.Integer, default=1)
 
-    def change_data(self, inp=None, out=None, points=None):
+    def change_data(self, inp=None, points=None):
         """
         Change input/output/points, return
         {'status': 'ok'}
-        {'status': 'invalid <input/output/points> type, expected <str/int> or None'}
+        {'status': 'invalid <input/points> type, expected <str/int> or None'}
         {'status': 'same test has already been added'}
+        {'status': 'invalid input for the reference, code gives error <error>'}
         """
         try:
             session = create_session()
             assert inp is None or type(inp) == str, 'invalid input type, expected str'
-            assert out is None or type(out) == str, 'invalid output type, expected str'
             assert points is None or type(points) == int, 'invalid input type, expected int'
-            assert len(session.query(Test).filter(Test.task_id == self.task_id, Test.input == (self.input if inp is None else inp), Test.output == (self.output if out is None else out)).all()) == 0, 'same test has already been added'
+            assert len(session.query(Test).filter(Test.task_id == self.task_id, Test.input == (self.input if inp is None else inp)).all()) == 0, 'same test has already been added'
             test = session.query(Test).filter(Test.id == self.id).first()
             if inp is not None:
+                output = Checker.get_output(self.task_id, inp)
+                assert output[0] == 'OK', f'invalid input for the reference, code gives error {output[0]}'
+                self.output = test.output = output[1]
                 self.input = test.input = inp
-            if out is not None:
-                self.output = test.output = out
             if points is not None:
                 self.points = test.points = points
             session.commit()
@@ -52,27 +61,29 @@ class Test(SqlAlchemyBase):
         return session.query(Test).filter(Test.id == test_id).first()
 
     @staticmethod
-    def add_test(task_id: int, inp: str, out: str, points=None) -> dict:
+    def add_test(task_id: int, inp: str, points=None) -> dict:
         """
         Add test to database, return:
         {'status': 'ok', 'id': int}
-        {'status': 'invalid <input/output/points> type, expected <str/int>'}
+        {'status': 'invalid <input/points> type, expected <str/int>'}
         {'status': 'no task with id '<task_id>''}
         {'status': 'same test has already been added'}
+        {'status': 'invalid input for the reference, code gives error <error>'}
         """
         try:
             session = create_session()
             assert len(session.query(Task).filter(Task.id == task_id).all()) == 1, f'no task with id \'{task_id}\''
             assert type(inp) == str, 'invalid input type, expected str'
-            assert type(out) == str, 'invalid output type, expected str'
             assert points is None or type(points) == int, 'invalid points type, expected int'
-            assert len(session.query(Test).filter(Test.task_id == task_id, Test.input == inp, Test.output == out).all()) == 0, 'same test has already been added'
+            assert len(session.query(Test).filter(Test.task_id == task_id, Test.input == inp).all()) == 0, 'same test has already been added'
+            output = Checker.get_output(task_id, inp)
+            assert output[0] == 'OK', f'invalid input for the reference, code gives error {output[0]}'
             session.add(Test(task_id=task_id,
                              input=inp,
-                             output=out,
+                             output=output[1],
                              points=points))
             session.commit()
-            return {'status': 'ok', 'id': session.query(Test).filter(Test.task_id == task_id, Test.input == inp, Test.output == out).first().id}
+            return {'status': 'ok', 'id': session.query(Test).filter(Test.task_id == task_id, Test.input == inp).first().id}
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
@@ -114,6 +125,8 @@ class Task(SqlAlchemyBase):
             if description is not None:
                 self.description = task.description = description
             if reference is not None:
+                status, attempt_id = Attempt.add_attempt(contest_id=0, solution=reference, task_id=self.id, user_id=self.creator)
+                assert status == 'OK', f'reference failed on tests, got error {status}'
                 self.reference = task.reference = reference
             session.commit()
             return {'status': 'ok'}
@@ -125,9 +138,9 @@ class Task(SqlAlchemyBase):
         session = create_session()
         return session.query(Test).filter(Test.task_id == self.id).order_by(sqlalchemy.desc(~Test.id)).all()
 
-    def add_test(self, inp: str, out: str, points=None):
+    def add_test(self, inp: str, points=None):
         """Add test to database by using Test.add_test(**kwargs)"""
-        return Test.add_test(task_id=self.id, inp=inp, out=out, points=points)
+        return Test.add_test(task_id=self.id, inp=inp, points=points)
 
     def add_attempt(self, successful=False):
         """Add attempt and successful to database"""
@@ -193,7 +206,7 @@ class Task(SqlAlchemyBase):
             task_id = session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).first().id
             tests_statuses = []
             for test in (tests if tests is not None else []):
-                tests_statuses.append(Test.add_test(task_id=task_id, inp=test.get('input'), out=test.get('output'), points=test.get('points')))
+                tests_statuses.append(Test.add_test(task_id=task_id, inp=test.get('input'), points=test.get('points')))
             return {'status': 'ok', 'id': task_id, 'tests_statuses': tests_statuses}
         except AssertionError as ex:
             return {'status': ex.args[0]}
@@ -476,7 +489,9 @@ class Attempt(SqlAlchemyBase):
                                 solution=solution,
                                 time=int(time())))
             session.commit()
-            return {'status': 'ok', 'id': session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id, Attempt.solution == solution).first().id}
+            attempt_id = session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id, Attempt.solution == solution).first().id
+            Checker.check_attempt(attempt_id)
+            return {'status': 'ok', 'id': attempt_id}
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
