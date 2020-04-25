@@ -133,6 +133,9 @@ class Task(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def get_rating(self):
+        pass
+
     def get_tests(self):
         """Return [Test(**kwargs), ...] sorted by index (recent added at the back)"""
         session = create_session()
@@ -272,6 +275,11 @@ class Contest(SqlAlchemyBase):
     def get_creators(self):
         """Return [User(**kwargs), ...]"""
         return [User.get_user(user_id) for user_id in map(int, self.creators.split(','))]
+
+    def get_rating(self):
+        """Return [{'task_id': int, 'user_id': int, 'score': int, 'attempt': int}, ...]"""
+        session = create_session()
+        return [row._asdict() for row in session.query(Attempt.task_id.label('task_id'), Attempt.user_id.label('user_id'), sqlalchemy.func.max(Attempt.score).label('score'), sqlalchemy.func.count().label('attempt')).filter(Attempt.contest_id == self.id).group_by(Attempt.task_id, Attempt.user_id).order_by(sqlalchemy.desc('score'))]
 
     @staticmethod
     def get_contest(contest_id):
