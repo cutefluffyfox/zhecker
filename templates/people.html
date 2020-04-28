@@ -8,9 +8,6 @@
           <p>
             {{ form.username.label }}<br>
             {{ form.username(class="control") }}<br>
-            {% for error in form.username.errors %}
-                <div class="alert alert-danger" role="alert">{{ error }}</div>
-            {% endfor %}
           <p>
 
             {{ form.submit(type="submit", class="button") }}

@@ -1,8 +1,10 @@
 {% extends "bar.html" %}
 
 {% block content %}
-<form action="" method="post" novalidate>
-<link href="../static/style/create_task_style.css">
+<link rel="stylesheet" href="static/style/settings_style.css"/>
+  <div class="d1">
+    <form action="" method="post" novalidate>
+
     {{ form.hidden_tag() }}
     <p>
         {{ form.username.label }}<br>
@@ -59,5 +61,6 @@
         {% endfor %}
 
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}
-</form>
+  </form>
+</div>
 {% endblock %}

@@ -9,9 +9,7 @@
           <p>
             {{ form.title.label }}<br>
             {{ form.title(class="control") }}<br>
-            {% for error in form.title.errors %}
-                <div class="alert alert-danger" role="alert">{{ error }}</div>
-            {% endfor %}
+
           <p>
             {{ form.submit(type="submit", class="btn btn-primary") }}
       </form>

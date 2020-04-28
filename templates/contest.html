@@ -8,7 +8,7 @@
       <tr> <th>id</th> <th>Назавние</th> <th>Статус</th></tr>
         {% for task in tasks %}
           <tr>
-            <td>{{task[0]}}</td> <td><a href="/task/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
+            <td>{{task[0]}}</td> <td><a href="/task/{{contest_id}}/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
           </tr>
         {% endfor %}
     </table>

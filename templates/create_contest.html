@@ -1,6 +1,7 @@
 {% extends "bar.html" %}
 
 {% block content %}
+{% if creator %}
 <link rel="stylesheet" href="../static/style/create_contest_style.css" />
     <div class="d1">
       <form action="" method="post" novalidate>
@@ -74,10 +75,22 @@
 
           </tr>
           </table>
+        <br>
 
+        {% if error| length != 0 %}
+          <div class="alert">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+            {{ error }}
+          </div>
+        {%  endif %}
 
         <p>
           {{ form.submit(type="submit", class="button") }}</p>
       </form>
-    </div>
+      </div>
+{% else %}
+<h1>ДОСТУП ЗАПРЕЩЁН</h1>
+<h2>Вы не можете создавать/редактировать турниры/задачи</h2>
+{% endif %}
+
 {% endblock %}

@@ -38,15 +38,16 @@ class PeopleSearch(FlaskForm):
 
 class CreateTask(FlaskForm):
     title = StringField('Назавание задачи', validators=[DataRequired()])
-    description = StringField('Описание задачи', validators=[DataRequired()])
+    description = TextAreaField('Описание задачи', validators=[DataRequired()])
     reference = FileField('Файл с эталоном решения', validators=[DataRequired()])
     time_limit = FloatField('Оптимальное время прохождения тестов (секунды)', validators=[DataRequired()])
     tests = FileField('Файл с тестами', validators=[DataRequired()])
     submit = SubmitField('Готово')
 
+
 class EditTask(FlaskForm):
     title = StringField('Назавание задачи')
-    description = StringField('Описание задачи')
+    description = TextAreaField('Описание задачи')
     reference = FileField('Файл с эталоном решения')
     time_limit = FloatField('Оптимальное время прохождения тестов (секунды)')
     tests = FileField('Файл с тестами')
@@ -62,7 +63,7 @@ class SubmitTask(FlaskForm):
 class CreateContest(FlaskForm):
     creators = StringField('Создатели  (id через запятую)', validators=[DataRequired()])
     title = StringField('Назавание турнира', validators=[DataRequired()])
-    description = StringField('Описание турнира', validators=[DataRequired()])
+    description = TextAreaField('Описание турнира', validators=[DataRequired()])
     tasks = StringField('Задачи турнира (id через запятую)', validators=[DataRequired()])
     start_date = StringField('Начало', validators=[DataRequired()])
     start_time = StringField('Начало', validators=[DataRequired()])
@@ -79,4 +80,10 @@ class ChangeSettings(FlaskForm):
     email = StringField('Электронная почта')
     city = StringField('Город')
     remember_me = BooleanField('Запомнить меня')
+    submit = SubmitField('Готово')
+
+
+class CheckTask(FlaskForm):
+    code_file = FileField('Файл с решением')
+    written_code = TextAreaField('Решение')
     submit = SubmitField('Готово')

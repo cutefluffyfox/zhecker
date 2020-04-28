@@ -557,4 +557,3 @@ class Trial(SqlAlchemyBase):
 
     def __repr__(self):
         return f"Trial(output='{self.output}', status='{self.status}')"
-

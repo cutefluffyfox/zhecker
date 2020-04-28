@@ -4,7 +4,7 @@ from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, current_user
 
 import forms
-from models import User, Contest, Task, __init__
+from models import User, Contest, Task, __init__, Attempt
 from db_session import global_init
 
 import time
@@ -29,7 +29,7 @@ def intro():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Регистрация"""
-
+    error = ""
     form = forms.RegisterForm()
     if form.validate_on_submit():
         username = form.username.data
@@ -39,37 +39,50 @@ def register():
         surname = form.surname.data
         city = form.city.data
         remember = form.remember_me.data
-        new_user = User.add_user(username=username,
-                                password=password,
-                                email=email,
-                                name=name,
-                                surname=surname,
-                                city=city)
-
-        if new_user.get("status") == "ok":
-            user = User.get_user(new_user.get('id'))
-            login_user(user, remember=remember)
-            return redirect('/contests')
+        if "@" not in email:
+            error = "Неправильный формат электронной почты"
+        else:
+            new_user = User.add_user(username=username,
+                                    password=password,
+                                    email=email,
+                                    name=name,
+                                    surname=surname,
+                                    city=city)
+            status = new_user.get("status")
+            if status == "ok":
+                user = User.get_user(new_user.get('id'))
+                login_user(user, remember=remember)
+                return redirect('/contests')
+            elif status == 'username is already taken':
+                error = "Пользователь с таким именем пользователя уже существует"
+            elif status == 'email is already taken':
+                error = "Пользователь с такой электронной почтой уже существует"
 
     return render_template('register.html',
-                           form=form)
+                           form=form,
+                           error=error)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Вход"""
-
+    error = ""
     form = forms.LoginForm()
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
         remember = form.remember_me.data
         user = User.authorize_user(username, password)
-        login_user(user, remember=remember)
-        return redirect('/contests')
+
+        if user == None:
+            error = "Неверный логин или пароль"
+        else:
+            login_user(user, remember=remember)
+            return redirect('/contests')
 
     return render_template('login.html',
-                           form=form)
+                           form=form,
+                           error=error)
 
 
 @app.route('/profile/<int:user_id>')
@@ -77,10 +90,11 @@ def login():
 def profile(user_id):
     """Профиль"""
     user = User.get_user(user_id)
-    permission = False
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('profile.html',
                            type="Профиль",
-                           create=permission,
+                           creator=creator,
                            name=user.name,
                            surename=user.surname,
                            city=user.city,
@@ -123,28 +137,28 @@ def archive():
     for i in tasks_info:
         tasks.append([i.id, i.title, i.description])
     print(tasks)
-    permission = True
+
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('archive.html',
                            type="Архив",
-                           create=permission,
+                           creator=creator,
                            tasks=tasks,
                            form=form,
                            current_id=current_user.id)
 
 
-@app.route('/task/<int:task_id>', methods=['GET', 'POST'])
+@app.route('/task/<int:contest_id>/<int:task_id>', methods=['GET', 'POST'])
 @login_required
-def task(task_id):
+def task(contest_id, task_id):
     """Задача"""
+    code_file, code, status = "", "", ""
+
     task = Task.get_task(task_id)
     title = task.title
     description = task.description
     data = task.get_tests()[:2]
-    print(data)
-    input_data = []
-    output_data = []
-    output_data = []
-    print(task.id)
+    input_data, output_data = [], []
     for i in data:
         input_data.append(i.input.split("\n"))
         output_data.append(i.output.split("\n"))
@@ -154,25 +168,52 @@ def task(task_id):
     if task.creator == current_user.id:
         edit = True
 
-    permission = False
+    form = forms.CheckTask()
+    if request.method == "POST":
+        if request.files:
+            code_file = request.files["code_file"]
+            code_file = code_file.read()
+            code_file = code_file.decode('utf-8')
+            print([code_file])
+
+    if form.validate_on_submit():
+        written_code = form.written_code.data
+
+        if len(written_code) > 0 >= len(code_file):
+            code = written_code
+
+        elif len(written_code) == 0 > len(code_file):
+            code = code_file
+
+    if len(code) != 0:
+        status = Attempt.add_attempt(contest_id, task_id, current_user.id, code).get("status")
+        if status == "ok":
+            status = "задача проверяется"
+            #дописать вердикт
+
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('task.html',
                            type="Задача",
-                           create=permission,
                            title=title,
                            question=description,
                            input_data=input_data,
                            output_data=output_data,
                            task_edit=edit,
+                           form=form,
+                           creator=creator,
                            task_id=task_id,
+                           contest_id=contest_id,
+                           status=status,
                            current_id=current_user.id)
 
 
 @app.route('/create_task', methods=['GET', 'POST'])
 @login_required
 def create_task():
-    reference = ""
+    reference, error = "", ""
     tests = []
-    form = forms.EditTask()
+    form = forms.CreateTask()
 
     if request.method == "POST":
         if request.files:
@@ -189,14 +230,18 @@ def create_task():
         title = form.title.data
         description = form.description.data
         time_limit = form.time_limit.data
-        print(Task.add_task(creator, time_limit, title, description, reference, tests))
+        if len(reference) == 0:
+            error = "Некорректный формат эталона решения"
+        else:
+            print(Task.add_task(creator, time_limit, title, description, reference, tests))
 
-
-    permission = True
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('create_task.html',
                            type="Создать задачу",
-                           create=permission,
+                           creator=creator,
                            form=form,
+                           error=error,
                            current_id=current_user.id)
 
 
@@ -241,10 +286,11 @@ def edit_task(task_id):
     if task.creator == current_user.id:
         edit = True
 
-    create = True  #доделать проверку на возсожность создавать задачи
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('edit_task.html',
                            type="Изменить задачу",
-                           create=create,
+                           creator=creator,
                            form=form,
                            task_id=task_id,
                            task_edit=edit,
@@ -255,10 +301,11 @@ def edit_task(task_id):
 @login_required
 def system():
     """О системе"""
-    permission = False
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('system.html',
                            type="О системе",
-                           create=permission,
+                           creator=creator,
                            current_id=current_user.id)
 
 
@@ -281,11 +328,11 @@ def contests():
                          datetime.datetime.fromtimestamp(i.start_time).strftime('%Y-%m-%d %H:%M:%S'),
                          datetime.datetime.fromtimestamp(i.end_time).strftime('%Y-%m-%d %H:%M:%S')])
 
-
-    permission = True
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('contests.html',
                            type="Контесты",
-                           create=permission,
+                           creator=creator,
                            name=current_user.username,
                            contests=contests,
                            form=form,
@@ -296,7 +343,6 @@ def contests():
 @login_required
 def contest(contest_id):
     """Турнир"""
-
 
     contest = Contest.get_contest(contest_id)
     tasks = contest.get_tasks()
@@ -312,10 +358,11 @@ def contest(contest_id):
 
     print(edit)
 
-    permission = False
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('contest.html',
                            type="Контест",
-                           create=permission,
+                           creator=creator,
                            tasks=results,
                            contest_edit=edit,
                            current_id=current_user.id,
@@ -325,14 +372,15 @@ def contest(contest_id):
 @app.route('/edit_contest/<int:contest_id>', methods=['GET', 'POST'])
 @login_required
 def edit_contest(contest_id):
+    error = ""
     form = forms.CreateContest()
     contest = Contest.get_contest(contest_id)
 
     if request.method == "GET":
         form.title.data = contest.title
-        form.creators.data = ",".join(list(contest.creators))
+        form.creators.data = contest.creators
         form.description.data = contest.description
-        form.tasks.data = ",".join(list(contest.tasks))
+        form.tasks.data = contest.tasks
 
         start = datetime.datetime.fromtimestamp(contest.start_time).strftime('%Y-%m-%d %H:%M:%S').split()
         form.start_date.data = start[0]  #нужно распарсить аремя на date и time
@@ -361,24 +409,32 @@ def edit_contest(contest_id):
         end = f"{end_date} {end_time}"
         end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
         new_end = int(time.mktime(end))
-        print(new_start, new_end)
+        if start <= end:
+            error = "Неправильный формат даты проведения турнира"
+        else:
+            print(new_start, new_end)
 
-        print(contest.change_data(creators=new_creators if new_creators != contest.creators else None,
-                            title=new_title if new_title != contest.title else None,
-                            description=new_description if new_description != contest.description else None,
-                            tasks=new_tasks if new_tasks != contest.tasks else None,
-                            start_time=new_start if new_start != contest.start_time else None,
-                            end_time=new_end if new_end != contest.end_time else None))
+            print(contest.change_data(creators=new_creators if new_creators != contest.creators else None,
+                                title=new_title if new_title != contest.title else None,
+                                description=new_description if new_description != contest.description else None,
+                                tasks=new_tasks if new_tasks != contest.tasks else None,
+                                start_time=new_start if new_start != contest.start_time else None,
+                                end_time=new_end if new_end != contest.end_time else None))
+
+    creator = User.get_user(current_user.id).creator
+    print(creator)
 
     edit = False
     print(current_user.id, contest.creators)
-    if current_user.id == contest.creators:
+    if current_user.id in contest.creators.split(','):
         edit = True
 
     return render_template('edit_contest.html',
                            type="Изменить контест",
                            form=form,
                            contest_edit=edit,
+                           error=error,
+                           creator=creator,
                            current_id=current_user.id,
                            contest_id=contest_id)
 
@@ -386,7 +442,7 @@ def edit_contest(contest_id):
 @app.route('/create_contest', methods=['GET', 'POST'])
 @login_required
 def create_contest():
-
+    error = ""
     form = forms.CreateContest()
     if form.validate_on_submit():
         creators = form.creators.data
@@ -409,14 +465,23 @@ def create_contest():
         end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
         end = int(time.mktime(end))
 
+        status = Contest.add_contest(creators, title, description, tasks, start, end).get("status")
         print(creators, title, description, tasks, start, end)
+        if start >= end:
+            error = "Неправильный формат даты проведения турнира"
 
-        print(Contest.add_contest(creators, title, description, tasks, start, end))
+        elif status == "same contest has already been added":
+            error = "Такой турнир уже существует"
 
-    permission = True
+
+
+    creator = User.get_user(current_user.id).creator
+    print(creator)
+
     return render_template('create_contest.html',
                            type="Создать контест",
-                           create=permission,
+                           creator=creator,
+                           error=error,
                            form=form,
                            current_id=current_user.id)
 
@@ -426,16 +491,31 @@ def create_contest():
 def results(contest_id):
     """Результаты"""
     contest = Contest.get_contest(contest_id)
+    title = contest.title
 
     edit = False
     print(current_user.id, contest.creators)
     if current_user.id == str(contest.creators):
         edit = True
 
-    permission = False
+    rating = contest.get_rating()
+    print(rating)
+    rating = [User.get_user(i.get("user_id")) for i in rating]
+    print(rating)
+    rating = [[i.username, i.name, i.surname] for i in rating]
+    print(rating)
+    tasks = [Task.get_task(i) for i in list(map(int, contest.tasks.split(",")))]
+    tasks = [i.title for i in tasks]
+    print(tasks)
+
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('results.html',
                            type="Результаты",
-                           create=permission,
+                           title=title,
+                           tasks=tasks,
+                           create=creator,
+                           people_info=rating,
                            contest_edit=edit,
                            current_id=current_user.id,
                            contest_id=contest_id)
@@ -472,10 +552,11 @@ def settings():
         print(new_username, new_email, new_name, new_surname, new_city, new_password)
         print(User.get_user(current_user.id).change_data(new_username, new_email, new_name, new_surname, new_city, new_password))
 
-    permission = False
+    creator = User.get_user(current_user.id).creator
+    print(creator)
     return render_template('settings.html',
                            type="Настройки",
-                           create=permission,
+                           creator=creator,
                            form=form,
                            current_id=current_user.id)
 

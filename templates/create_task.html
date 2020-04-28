@@ -2,6 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="../static/style/create_task_style.css" />
+{% if creator %}
 <div class="d1">
   <form action="/create_task" method="POST" enctype="multipart/form-data" novalidate>
     {{ form.hidden_tag() }}
@@ -44,4 +45,9 @@
       {{ form.submit(type="submit", class="button") }}</p>
   </form>
 </div>
+{% else %}
+<h1>ДОСТУП ЗАПРЕЩЁН</h1>
+<h2>Вы не можете создавать/редактировать турниры/задачи</h2>
+{% endif %}
+
 {% endblock %}

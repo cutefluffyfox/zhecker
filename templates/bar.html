@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <!--JS для смены темы navbar-->
-    <script defer src="../static/theme.js"></script>
+    <script defer src="{{ url_for('static', filename='theme.js') }}"></script>
 <!--CSS файл для navbar-->
-    <link rel="stylesheet" href="../static/style/bar_style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/bar_style.css') }}" />
 <!--Шрифт-->
     <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css?family=Open Sans">
+          href="https://fonts.googleapis.com/css?family=Helvetica">
 <!--Иконка-->
-    <link rel="SHORTCUT ICON" href="../static/code.ico" type="image/ico">
+    <link rel="SHORTCUT ICON" href="{{ url_for('static', filename='code.ico') }}" type="image/ico">
       <style>
             body {background: RGB(214, 237, 253);}
             #navigation {z-index: 5; }
@@ -475,7 +475,7 @@
 <!--УСЛОВИЯ:-->
     <!--СОЗДАТЬ ТУРНИР-->
           {% if type == "Контесты" or type == "Создать контест" %}
-            {% if create %}
+            {% if creator %}
               <li class="nav-item">
                 <a href="/create_contest" class="nav-link">
 
@@ -502,7 +502,7 @@
           {% endif %}
     <!--СОЗДАТЬ ЗАДАЧУ-->
           {% if type == "Архив" or type == "Создать задачу" %}
-            {% if create %}
+            {% if creator %}
               <li class="nav-item">
                 <a href="/create_task" class="nav-link">
 
@@ -531,7 +531,7 @@
     <!--РЕЗУЛЬТАТЫ-->
     <!--ЗАДАЧИ-->
     <!--РЕДАКТИРОВАНИЕ-->
-          {% if type == "Контест" or type == "Результаты" or type == "Изменить контест" %}
+          {% if type == "Контест" or type == "Результаты" or type == "Изменить контест" or type == "Задача" %}
             <li class="nav-item">
                 <a href="/contest/{{contest_id}}" class="nav-link">
                   <svg version="1.1"

@@ -7,7 +7,7 @@ h1 {
 }
 
 form {
-    margin-left: 3rem;
+    margin-left: 11rem;
     max-width: 450px;
     border-radius: 5px;
 }
@@ -16,12 +16,13 @@ input {
   border-color: RGB(33, 133, 207);
   border-radius: 4px;
   height:2rem;
-  width:15rem;
+  width:25rem;
+  font-size:1rem;
 }
 
 .button {
-  height:2rem;
-  width:4rem;
+  height:3rem;
+  width:6rem;
   border-radius: 4px;
   transition-duration: 0.4s;
 }
@@ -31,6 +32,10 @@ input {
   color: white;
 }
 
+h1 {
+    margin-left: 11rem;
+}
+
 table {
- margin-left: 3rem;
+ margin-left: 11rem;
  }
