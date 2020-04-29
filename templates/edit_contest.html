@@ -3,6 +3,7 @@
 {% block content %}
 {% if creator %}
 <link rel="stylesheet" href="../static/style/create_contest_style.css" />
+<link rel="stylesheet" href="../static/style/alert_style.css" />
     <div class="d1">
       <form method="post" novalidate>
         {{ form.hidden_tag() }}
@@ -75,7 +76,12 @@
 
           </tr>
           </table>
-          <h1>{{ error }}</h1>
+      {% if error| length != 0 %}
+          <div class="alert">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+            {{ error }}
+          </div>
+      {% endif %}
 
         <p>
           {{ form.submit(type="submit", class="button") }}</p>

@@ -1,0 +1,39 @@
+:root {
+  font-size: 16px;
+  font-family: 'Helvetica';
+  --text-primary: #b6b6b6;
+  --text-secondary: #ececec;
+  --bg-primary: #23232e;
+  --bg-secondary: #141418;
+  --transition-speed: 600ms;
+}
+
+h1 {
+  margin-left: 16rem;
+}
+
+form {
+  text-align: center;
+}
+
+input {
+  border-width: 0px;
+  border-color: White;
+  border-radius: 4px;
+  height: 2.5rem;
+  width: 60rem;
+  font-size: 1rem;
+}
+
+.button {
+  background-color: RGB(33, 150, 240);
+  height: 2rem;
+  width: 25rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+}
+
+.button:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}

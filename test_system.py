@@ -25,7 +25,7 @@ class Checker:
             if Checker.__check_restricted(file):
                 Checker.__close_file(file)
                 return 'SB', ''
-            result = subprocess.run(f'python {file}', input=inp, text=True, capture_output=True,
+            result = subprocess.run(["python3.7", f'{file}'], input=inp, text=True, capture_output=True,
                                     timeout=task.time_limit + Checker.time_to_start_process, start_new_session=True)
             Checker.__close_file(file)
             if result.returncode == 0:
@@ -61,7 +61,7 @@ class Checker:
         try:
             if Checker.__check_restricted(file):
                 return 'SB', ''
-            result = subprocess.run(f'python {file}', input=inp, text=True, capture_output=True, timeout=tl + Checker.time_to_start_process, start_new_session=True)
+            result = subprocess.run(["python3.7", f'{file}'], input=inp, text=True, capture_output=True, timeout=tl + Checker.time_to_start_process, start_new_session=True)
             if result.returncode == 0 and result.stdout == out:
                 return 'OK', ''
             elif result.returncode == 0:
