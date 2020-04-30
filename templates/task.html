@@ -8,6 +8,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='behave.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
+<button class="back" onclick="window.history.back()">Назад</button>
 
   <h1>{{ title }} {{ status }}</h1>
   <h3>{{ question }}</h3>
@@ -17,8 +18,8 @@
     {% for i in range(input_data| length) %}
       <tr>
 
-        <td> {% for j in  input_data[i]%} {{ j }} <br> {% endfor %}</td>
-        <td> {% for z in  output_data[i]%} {{ z }} <br> {% endfor %}</td>
+        <td> {% for j in  input_data[i]%} {{ j }}{% endfor %}</td><td> {% for z in  output_data[i]%} {{ z }}{% endfor %}</td><br>
+
 
       </tr>
     {% endfor %}
@@ -43,11 +44,12 @@
         {% endfor %}
     </div>
 
+{% if error| length != 0 %}
     <div class="alert">
       <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
       {{ error }}
     </div>
-
+{% endif %}
 
     <p>
       {{ form.submit(type="submit", class="button") }}</p>

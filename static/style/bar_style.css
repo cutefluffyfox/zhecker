@@ -8,6 +8,20 @@
   --transition-speed: 600ms;
 }
 
+.back {
+  background-color: RGB(33, 150, 240);
+  height:2.5rem;
+  width:9rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+  font-size:1rem;
+}
+
+.back:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}
+
 main {
     margin-left:11rem;
 }

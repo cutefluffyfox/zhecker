@@ -6,7 +6,7 @@ h1 {
 }
 
 form {
-    margin-left: 11rem;
+    margin-left: 12rem;
     max-width: 450px;
     border-radius: 5px;
 }
@@ -21,6 +21,7 @@ input {
 }
 
 textarea {
+  border-width: 0px;
   border-color: White;
   border-radius: 4px;
   height:5rem;
@@ -31,7 +32,7 @@ textarea {
 .button {
   background-color: RGB(33, 150, 240);
   height:2rem;
-  width:6rem;
+  width:25rem;
   border-radius: 4px;
   transition-duration: 0.4s;
 }

@@ -3,7 +3,7 @@ div {padding: 10px 0}
 
 
 form {
-    margin-left: 11rem;
+    margin-left: 12rem;
     max-width: 450px;
     border-radius: 5px;
 }
@@ -19,8 +19,8 @@ input {
 
 .button {
   background-color: RGB(33, 150, 240);
-  height:3rem;
-  width:6rem;
+  height:2rem;
+  width:36rem;
   border-radius: 4px;
   transition-duration: 0.4s;
 }

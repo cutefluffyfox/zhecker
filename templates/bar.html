@@ -532,7 +532,8 @@
     <!--ЗАДАЧИ-->
     <!--РЕДАКТИРОВАНИЕ-->
           {% if type == "Контест" or type == "Результаты" or type == "Изменить контест" or type == "Задача" %}
-            <li class="nav-item">
+            {% if contest_id != 0 %}
+              <li class="nav-item">
                 <a href="/contest/{{contest_id}}" class="nav-link">
                   <svg version="1.1"
                      id="Capa_1"
@@ -609,7 +610,7 @@
                 </a>
               </li>
 
-            <li class="nav-item">
+              <li class="nav-item">
                   <a href="/results/{{contest_id}}" class="nav-link">
                     <svg version="1.1" id="Layer_1"
                           xmlns="http://www.w3.org/2000/svg"
@@ -648,8 +649,8 @@
                     <span class="link-text">Результаты</span>
                   </a>
                 </li>
-            {% if contest_edit %}
-              <li class="nav-item">
+              {% if contest_edit %}
+                 <li class="nav-item">
                     <a href="/edit_contest/{{contest_id}}" class="nav-link">
                       <svg height="401pt"
                             viewBox="0 -1 401.52289 401"
@@ -665,6 +666,7 @@
                        <span class="link-text">Редактировать контест</span>
                      </a>
                    </li>
+              {% endif %}
             {% endif %}
           {% endif %}
 

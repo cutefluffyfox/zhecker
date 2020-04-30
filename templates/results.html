@@ -2,6 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="../static/style/results_style.css"/>
+<button class="back" onclick="window.history.back()">Назад</button>
 <h1>{{ title }}</h1>
   <table>
       <tr> <th>Место</th> <th>Имя пользователя</th> <th>Имя</th> <th>Фамилия</th> {% for task in tasks %}  <th>{{ task }}</th> {% endfor %} </tr>

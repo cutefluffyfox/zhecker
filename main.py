@@ -127,8 +127,8 @@ def people():
 @login_required
 def archive():
     """Архив задач"""
-    tasks = []
-    tasks_info = []
+
+    tasks, tasks_info = [], []
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
@@ -146,6 +146,7 @@ def archive():
                            tasks=tasks,
                            form=form,
                            current_id=current_user.id)
+
 
 
 @app.route('/task/<int:contest_id>/<int:task_id>', methods=['GET', 'POST'])
@@ -230,10 +231,19 @@ def create_task():
         title = form.title.data
         description = form.description.data
         time_limit = form.time_limit.data
+
+        status = Task.add_task(creator, time_limit, title, description, reference, tests).get("status")
         if len(reference) == 0:
             error = "Некорректный формат эталона решения"
-        else:
-            print(Task.add_task(creator, time_limit, title, description, reference, tests))
+
+        elif status == "same task has already been added":
+            error = "Такой турнир уже существует"
+
+        elif status == "reference failed on tests, got error status'":
+            error = "Вы не загрузили тесты"
+
+
+
 
     creator = User.get_user(current_user.id).creator
     print(creator)
@@ -251,8 +261,7 @@ def edit_task(task_id):
     task = Task.get_task(task_id)
     form = forms.EditTask()
 
-    new_reference = ""
-    new_tests = []
+    error, new_reference = "", ""
 
     if request.method == "GET":
         print("GET success")
@@ -266,21 +275,26 @@ def edit_task(task_id):
             reference = request.files["reference"]
             reference = reference.read()
             new_reference = reference.decode('utf-8')
-            #
-            # tests = request.files["tests"]
-            # new_tests = load(tests)
-            # print(new_tests)
 
     if form.validate_on_submit():
         print("VALIDATE success")
         new_title = form.title.data
         new_description = form.description.data
         new_time_limit = form.time_limit.data
-        print(task.change_data(time_limit=new_time_limit if new_time_limit != task.time_limit else None,
+
+        if len(new_reference) == 0:
+            new_reference = task.reference
+
+        status = task.change_data(time_limit=new_time_limit if new_time_limit != task.time_limit else None,
                          title=new_title if new_title != task.title else None,
                          description=new_description if new_description != task.description else None,
-                         reference=new_reference if new_reference != task.reference else None))
-                         # tests=new_tests if new_tests is not None else None
+                         reference=new_reference if new_reference != task.reference else None).get("status")
+
+        print(status)
+        if status == "same task has already been added":
+            error = "Вы не внесли изменений"
+
+
 
     edit = False
     if task.creator == current_user.id:
@@ -294,6 +308,7 @@ def edit_task(task_id):
                            form=form,
                            task_id=task_id,
                            task_edit=edit,
+                           error=error,
                            current_id=current_user.id)
 
 
@@ -314,6 +329,7 @@ def system():
 def contests():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
+
     contests = []
     contests_info = []
     form = forms.ContestSearch()
@@ -409,17 +425,23 @@ def edit_contest(contest_id):
         end = f"{end_date} {end_time}"
         end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
         new_end = int(time.mktime(end))
-        if start <= end:
-            error = "Неправильный формат даты проведения турнира"
-        else:
-            print(new_start, new_end)
 
-            print(contest.change_data(creators=new_creators if new_creators != contest.creators else None,
+
+        print(new_start, new_end)
+        if new_start >= new_end:
+            error = "Неправильный формат даты проведения турнира"
+
+        status = contest.change_data(creators=new_creators if new_creators != contest.creators else None,
                                 title=new_title if new_title != contest.title else None,
                                 description=new_description if new_description != contest.description else None,
                                 tasks=new_tasks if new_tasks != contest.tasks else None,
                                 start_time=new_start if new_start != contest.start_time else None,
-                                end_time=new_end if new_end != contest.end_time else None))
+                                end_time=new_end if new_end != contest.end_time else None).get("status")
+        print(status)
+        if status == "same contest has already been added":
+            error = "Не были внесены изменения"
+
+
 
     creator = User.get_user(current_user.id).creator
     print(creator)

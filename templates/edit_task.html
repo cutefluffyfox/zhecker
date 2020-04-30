@@ -2,6 +2,8 @@
 
 {% block content %}
 <link rel="stylesheet" href="../static/style/create_task_style.css" />
+<link rel="stylesheet" href="../static/style/alert_style.css" />
+<button class="back" onclick="window.history.back()">Назад</button>
 {% if creator %}
 <div class="d1">
   <form action="/edit_task/{{ task_id }}" method="POST" enctype="multipart/form-data" novalidate>
@@ -34,12 +36,12 @@
         <div class="alert alert-danger" role="alert">{{ error }}</div>
       {% endfor %}
 
-    <p>
-      {{ form.tests.label }}<br>
-      {{ form.tests(type="file", class="form-control-file") }}<br>
-      {% for error in form.tests.errors %}
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
-      {% endfor %}
+        {% if error| length != 0 %}
+          <div class="alert">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+            {{ error }}
+          </div>
+        {%  endif %}
 
     <p>
       {{ form.submit(type="submit", class="button") }}</p>
