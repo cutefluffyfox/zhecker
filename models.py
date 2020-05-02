@@ -3,9 +3,11 @@ from db_session import SqlAlchemyBase, create_session
 from flask_login import UserMixin
 from random import randint
 from hashlib import sha3_256
-from json import load
 from time import time
 from test_system import Checker
+from email_sender import send_email
+from os import environ
+import threading
 
 
 def __init__():
@@ -53,6 +55,12 @@ class Test(SqlAlchemyBase):
             return {'status': 'ok'}
         except AssertionError as ex:
             return {'status': ex.args[0]}
+
+    def delete_test(self):
+        """Delete test from database"""
+        session = create_session()
+        session.delete(session.query(Test).filter(Test.id == self.id).first())
+        session.commit()
 
     @staticmethod
     def get_test(test_id: int):
@@ -133,9 +141,6 @@ class Task(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
-    def get_rating(self):
-        pass
-
     def get_tests(self):
         """Return [Test(**kwargs), ...] sorted by index (recent added at the back)"""
         session = create_session()
@@ -151,6 +156,12 @@ class Task(SqlAlchemyBase):
         task = session.query(Task).filter(Task.id == self.id).first()
         self.attempts = task.attempts = task.attempts + 1
         self.successful = task.successful = task.successful + successful
+        session.commit()
+
+    def delete_attempt(self):
+        """Delete attempt from database"""
+        session = create_session()
+        session.delete(session.query(Attempt).filter(Attempt.id == self.id).first())
         session.commit()
 
     @staticmethod
@@ -281,6 +292,12 @@ class Contest(SqlAlchemyBase):
         session = create_session()
         return [row._asdict() for row in session.query(Attempt.task_id.label('task_id'), Attempt.user_id.label('user_id'), sqlalchemy.func.max(Attempt.score).label('score'), sqlalchemy.func.count().label('attempt')).filter(Attempt.contest_id == self.id).group_by(Attempt.task_id, Attempt.user_id).order_by(sqlalchemy.desc('score'))]
 
+    def delete_contest(self):
+        """Delete contest from database"""
+        session = create_session()
+        session.delete(session.query(Contest).filter(Contest.id == self.id).first())
+        session.commit()
+
     @staticmethod
     def get_contest(contest_id):
         """Return Contest(**kwargs) by contest_id or None if id is invalid"""
@@ -339,10 +356,11 @@ class User(SqlAlchemyBase, UserMixin):
     password = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    register_date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     city = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     creator = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
     verification = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    contests = sqlalchemy.Column(sqlalchemy.String, default='')
+    registered = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     def change_data(self, username=None, email=None, name=None, surname=None, city=None, password=None) -> dict:
         """
@@ -379,6 +397,40 @@ class User(SqlAlchemyBase, UserMixin):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    # def get_contest_info(self, contest_id: int):
+    #     session = create_session()
+    #     contest = Contest.get_contest(contest_id)
+    #     for task in contest.get_tasks():
+    #         pass
+    #     return info
+
+    def delete_user(self):
+        """Delete user from database"""
+        session = create_session()
+        session.delete(session.query(User).filter(User.id == self.id).first())
+        session.commit()
+
+    @staticmethod
+    def delete_by_verification(email: str, verification_key: str):
+        """Delete user by email and verification_key"""
+        session = create_session()
+        user = session.query(User).filter(User.email == email, User.verification == verification_key).first()
+        if user is not None and user.verification is not None:
+            user.delete_user()
+
+    @staticmethod
+    def check_verification_key(email: str, verification_key: str):
+        """Return User(**kwargs) by email and verification_key or None if email/verification_key invalid or timed out"""
+        session = create_session()
+        user = session.query(User).filter(User.email == email, User.verification == verification_key).first()
+        if user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60:
+            user.registered = True
+            user.verification = None
+        elif user is not None and user.verification is not None:
+            user.delete_user()
+        session.commit()
+        return user
+
     @staticmethod
     def get_users_by_username(username: str):
         """Return [User(**kwargs), ...] by username where User.username like username"""
@@ -389,7 +441,7 @@ class User(SqlAlchemyBase, UserMixin):
     def get_user(user_id: int):
         """Return User(**kwargs) by user_id or None if id is invalid"""
         session = create_session()
-        return session.query(User).filter(User.id == user_id).first()
+        return session.query(User).filter(User.id == user_id, User.registered == True).first()
 
     @staticmethod
     def authorize_user(username: str, password: str):
@@ -400,7 +452,7 @@ class User(SqlAlchemyBase, UserMixin):
     @staticmethod
     def __generate_password(password: str) -> str:
         """Return hashed password by password"""
-        return sha3_256((password + load(open('config.json', 'r', encoding='UTF-8'))['SALT']).encode('UTF-8')).hexdigest()
+        return sha3_256((password + environ['SALT']).encode('UTF-8')).hexdigest()
 
     @staticmethod
     def add_user(username: str, email: str, password: str, name: str, surname: str, city=None) -> dict:
@@ -409,6 +461,7 @@ class User(SqlAlchemyBase, UserMixin):
         {'status': 'ok', 'id': int}
         {'status': 'invalid <password/name/surname/city> type, expected <str/None>'}
         {'status': '<username/email> is already taken'}
+        {'status': 'email not send'}
         """
         try:
             session = create_session()
@@ -424,9 +477,12 @@ class User(SqlAlchemyBase, UserMixin):
                              name=name,
                              surname=surname,
                              city=city,
+                             register_date=int(time()),
                              verification="".join([chr(randint(65, 90)) if randint(0, 1) else chr(randint(97, 122)) for _ in range(30)])))
             session.commit()
-            return {'status': 'ok', 'id': session.query(User).filter(User.username == username).first().id}
+            user = session.query(User).filter(User.username == username).first()
+            assert send_email(user.email, content_type='verification', verification_key=user.verification, email=email), 'email not send'
+            return {'status': 'ok', 'id': user.id}
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
@@ -466,11 +522,20 @@ class Attempt(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def retry(self):
+        thread = threading.Thread(target=Checker.check_attempt, args=(self.id,))
+        thread.start()
+
     @staticmethod
     def get_attempt(attempt_id: int):
         """Return Attempt(**kwargs) by attempt_id or None if id is invalid"""
         session = create_session()
         return session.query(Attempt).filter(Attempt.id == attempt_id).first()
+
+    @staticmethod
+    def get_best_result(contest_id: int, task_id: int, user_id: int):
+        session = create_session()
+        return session.query(Attempt.status, sqlalchemy.func.max(Attempt.score)).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id).all()
 
     @staticmethod
     def add_attempt(contest_id: int, task_id: int, user_id: int, solution: str):
@@ -495,10 +560,12 @@ class Attempt(SqlAlchemyBase):
                                 task_id=task_id,
                                 user_id=user_id,
                                 solution=solution,
+                                status='?',
                                 time=int(time())))
             session.commit()
             attempt_id = session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id, Attempt.solution == solution).first().id
-            Checker.check_attempt(attempt_id)
+            thread = threading.Thread(target=Checker.check_attempt, args=(attempt_id,))
+            thread.start()
             return {'status': 'ok', 'id': attempt_id}
         except AssertionError as ex:
             return {'status': ex.args[0]}

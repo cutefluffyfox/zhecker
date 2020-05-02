@@ -2,11 +2,14 @@ import subprocess
 from os import remove
 from time import time
 import models
+from os import environ
+from random import randint
 
 
 class Checker:
-    RESTRICTED = {'import'}
+    RESTRICTED = {'import', 'eval', 'exec', 'open'}  # functions that are not allowed in the code
     time_to_start_process = 0.6  # some extra time before timeout
+    python = environ['PYTHON_INTERPRETER']
     errors = {
         'OK': 'successfully',
         'SB': 'solution banned',
@@ -14,19 +17,19 @@ class Checker:
         'CE': 'compilation error',
         'RE': 'run-time error',
         'TL': 'time limit',
-        'TS': 'test skipped'
+        'TS': 'test skipped',
+        '?': 'in progress'
     }
 
     @staticmethod
     def get_output(task_id: int, inp: str) -> (str, str):
+        task = models.Task.get_task(task_id)
+        file = Checker.__save_file(task.reference)
         try:
-            task = models.Task.get_task(task_id)
-            file = Checker.__save_file(task.reference)
             if Checker.__check_restricted(file):
                 Checker.__close_file(file)
                 return 'SB', ''
-            result = subprocess.run(["python3.7", f'{file}'], input=inp, text=True, capture_output=True,
-                                    timeout=task.time_limit + Checker.time_to_start_process, start_new_session=True)
+            result = subprocess.run([Checker.python, file], input=inp, text=True, capture_output=True, timeout=task.time_limit + Checker.time_to_start_process, start_new_session=True)
             Checker.__close_file(file)
             if result.returncode == 0:
                 return 'OK', result.stdout
@@ -61,7 +64,7 @@ class Checker:
         try:
             if Checker.__check_restricted(file):
                 return 'SB', ''
-            result = subprocess.run(["python3.7", f'{file}'], input=inp, text=True, capture_output=True, timeout=tl + Checker.time_to_start_process, start_new_session=True)
+            result = subprocess.run([Checker.python, file], input=inp, text=True, capture_output=True, timeout=tl + Checker.time_to_start_process, start_new_session=True)
             if result.returncode == 0 and result.stdout == out:
                 return 'OK', ''
             elif result.returncode == 0:
@@ -75,7 +78,7 @@ class Checker:
 
     @staticmethod
     def __save_file(solution: str) -> str:
-        file_name = f"{int(time())}_{len(solution)}.py"
+        file_name = f"{int(time())}_{len(solution)}_{randint(0, 1000000)}.py"
         file = open(file_name, 'w', encoding='UTF-8')
         file.write(solution)
         return file_name

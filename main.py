@@ -1,25 +1,25 @@
 from json import load
+import time
+import datetime
+from os import environ
 
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, current_user
 
+import create_environment  # creatng environment variables
+from db_session import global_init
 import forms
 from models import User, Contest, Task, __init__, Attempt
-from db_session import global_init
 
-import time
-import datetime
 
 global_init('database.db')
 __init__()
 app = Flask(__name__)
-with open('config.json', 'r') as file:
-    app.config['SECRET_KEY'] = load(file)['APP_KEY']
+app.config['SECRET_KEY'] = environ['APP_KEY']
 login_manager = LoginManager(app)
 
 
 @app.route('/')
-
 @app.route('/intro')
 def intro():
     """Титульная страница сайта"""
@@ -38,7 +38,6 @@ def register():
         name = form.name.data
         surname = form.surname.data
         city = form.city.data
-        remember = form.remember_me.data
         if "@" not in email:
             error = "Неправильный формат электронной почты"
         else:
@@ -50,9 +49,7 @@ def register():
                                     city=city)
             status = new_user.get("status")
             if status == "ok":
-                user = User.get_user(new_user.get('id'))
-                login_user(user, remember=remember)
-                return redirect('/contests')
+                error = 'Мы выслали вам письмо с подтверждением аккаунта'
             elif status == 'username is already taken':
                 error = "Пользователь с таким именем пользователя уже существует"
             elif status == 'email is already taken':
@@ -74,7 +71,7 @@ def login():
         remember = form.remember_me.data
         user = User.authorize_user(username, password)
 
-        if user == None:
+        if user is None:
             error = "Неверный логин или пароль"
         else:
             login_user(user, remember=remember)
@@ -87,7 +84,7 @@ def login():
 
 @app.route('/profile/<int:user_id>')
 @login_required
-def profile(user_id):
+def profile_page(user_id):
     """Профиль"""
     user = User.get_user(user_id)
     creator = User.get_user(current_user.id).creator
@@ -104,7 +101,7 @@ def profile(user_id):
 
 @app.route('/people', methods=['GET', 'POST'])
 @login_required
-def people():
+def people_page():
     """Профиль"""
     results = []
     people = []
@@ -125,7 +122,7 @@ def people():
 
 @app.route('/archive', methods=['GET', 'POST'])
 @login_required
-def archive():
+def archive_page():
     """Архив задач"""
 
     tasks, tasks_info = [], []
@@ -148,10 +145,9 @@ def archive():
                            current_id=current_user.id)
 
 
-
 @app.route('/task/<int:contest_id>/<int:task_id>', methods=['GET', 'POST'])
 @login_required
-def task(contest_id, task_id):
+def task_page(contest_id, task_id):
     """Задача"""
     code_file, code, status = "", "", ""
 
@@ -242,9 +238,6 @@ def create_task():
         elif status == "reference failed on tests, got error status'":
             error = "Вы не загрузили тесты"
 
-
-
-
     creator = User.get_user(current_user.id).creator
     print(creator)
     return render_template('create_task.html',
@@ -294,8 +287,6 @@ def edit_task(task_id):
         if status == "same task has already been added":
             error = "Вы не внесли изменений"
 
-
-
     edit = False
     if task.creator == current_user.id:
         edit = True
@@ -326,7 +317,7 @@ def system():
 
 @app.route('/contests', methods=['GET', 'POST'])
 @login_required
-def contests():
+def contests_page():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
 
@@ -357,7 +348,7 @@ def contests():
 
 @app.route('/contest/<int:contest_id>')
 @login_required
-def contest(contest_id):
+def contest_page(contest_id):
     """Турнир"""
 
     contest = Contest.get_contest(contest_id)
@@ -426,7 +417,6 @@ def edit_contest(contest_id):
         end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
         new_end = int(time.mktime(end))
 
-
         print(new_start, new_end)
         if new_start >= new_end:
             error = "Неправильный формат даты проведения турнира"
@@ -440,8 +430,6 @@ def edit_contest(contest_id):
         print(status)
         if status == "same contest has already been added":
             error = "Не были внесены изменения"
-
-
 
     creator = User.get_user(current_user.id).creator
     print(creator)
@@ -495,8 +483,6 @@ def create_contest():
         elif status == "same contest has already been added":
             error = "Такой турнир уже существует"
 
-
-
     creator = User.get_user(current_user.id).creator
     print(creator)
 
@@ -510,7 +496,7 @@ def create_contest():
 
 @app.route('/results/<int:contest_id>', methods=['GET', 'POST'])
 @login_required
-def results(contest_id):
+def results_page(contest_id):
     """Результаты"""
     contest = Contest.get_contest(contest_id)
     title = contest.title
@@ -583,9 +569,25 @@ def settings():
                            current_id=current_user.id)
 
 
+@app.route('/email_verification', methods=['GET'])
+def email_verification():
+    action_type = request.args.get('action_type')
+    email = request.args.get('email')
+    verification_key = request.args.get('verification_key')
+    user = None
+    if action_type == 'submit':
+        user = User.check_verification_key(email, verification_key)
+    elif action_type == 'remove':
+        User.delete_by_verification(email, verification_key)
+    if user is not None:
+        login_user(user, remember=True)
+        return redirect('/contests')
+    return redirect('/register')
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user(user_id)
 
 
-app.run()
+app.run(host=environ.get('HOST', '0.0.0.0'), port=int(environ.get("PORT", 5000)))
