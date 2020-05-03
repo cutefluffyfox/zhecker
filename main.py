@@ -149,7 +149,7 @@ def archive_page():
 @login_required
 def task_page(contest_id, task_id):
     """Задача"""
-    code_file, code, status = "", "", ""
+    code_file, code, status, error, verdict = "", "", "", "", ""
 
     task = Task.get_task(task_id)
     title = task.title
@@ -184,8 +184,11 @@ def task_page(contest_id, task_id):
 
     if len(code) != 0:
         status = Attempt.add_attempt(contest_id, task_id, current_user.id, code).get("status")
+        print(status)
         if status == "ok":
-            status = "задача проверяется"
+            verdict = "Задача проверяется"
+        elif status == "the same solution has already been sent":
+            error = "Вы уже отправляли идетичное решение"
             #дописать вердикт
 
     creator = User.get_user(current_user.id).creator
@@ -201,7 +204,8 @@ def task_page(contest_id, task_id):
                            creator=creator,
                            task_id=task_id,
                            contest_id=contest_id,
-                           status=status,
+                           verdict=verdict,
+                           error=error,
                            current_id=current_user.id)
 
 
@@ -513,7 +517,7 @@ def results_page(contest_id):
     rating = [[i.username, i.name, i.surname] for i in rating]
     print(rating)
     tasks = [Task.get_task(i) for i in list(map(int, contest.tasks.split(",")))]
-    tasks = [i.title for i in tasks]
+    tasks = [[i.id, i.title] for i in tasks]
     print(tasks)
 
     creator = User.get_user(current_user.id).creator

@@ -5,7 +5,7 @@
 <button class="back" onclick="window.history.back()">Назад</button>
 <h1>{{ title }}</h1>
   <table>
-      <tr> <th>Место</th> <th>Имя пользователя</th> <th>Имя</th> <th>Фамилия</th> {% for task in tasks %}  <th>{{ task }}</th> {% endfor %} </tr>
+      <tr> <th>Место</th> <th>Имя пользователя</th> <th>Имя</th> <th>Фамилия</th> {% for task in tasks %}  <th> <a href="/task/{{ contest_id }}/{{ task[0] }}"> {{ task[1] }}</a></th> {% endfor %} </tr>
     {% for i in range(people_info| length) %}
       <tr>
 

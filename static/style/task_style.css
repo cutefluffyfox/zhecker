@@ -59,3 +59,7 @@ textarea {
   background-color: RGB(33, 133, 207);
   color: white;
 }
+
+form {
+  margin-left: 12rem;
+}

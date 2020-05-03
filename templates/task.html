@@ -7,8 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script type="text/javascript" src="{{ url_for('static', filename='behave.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/alert_style.css') }}" />
+
 </head>
-<button class="back" onclick="window.history.back()">Назад</button>
+<button class="back" onclick="window.history.back()">Назад</button><br><br><br>
+
+  <form action="" method="post" enctype="multipart/form-data" novalidate>
+
+  {% if verdict| length != 0 %}
+    <div class="verdict">
+        <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+        {{ verdict }}
+    </div>
+  {% endif %}
 
   <h1>{{ title }} {{ status }}</h1>
   <h3>{{ question }}</h3>
@@ -18,14 +29,12 @@
     {% for i in range(input_data| length) %}
       <tr>
 
-        <td> {% for j in  input_data[i]%} {{ j }}{% endfor %}</td><td> {% for z in  output_data[i]%} {{ z }}{% endfor %}</td><br>
-
+        <td> {% for j in  input_data[i]%} {{ j }} <br>{% endfor %}</td><td> {% for z in  output_data[i]%} {{ z }}<br>{% endfor %}</td><br>
 
       </tr>
     {% endfor %}
   </table><br>
 
-  <form action="" method="post" enctype="multipart/form-data" novalidate>
     {{ form.hidden_tag() }}
     <p>
       {{ form.code_file.label }}<br>
@@ -43,10 +52,11 @@
           <div class="alert alert-danger" role="alert">{{ error }}</div>
         {% endfor %}
     </div>
+      <br>
 
 {% if error| length != 0 %}
     <div class="alert">
-      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+      <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
       {{ error }}
     </div>
 {% endif %}

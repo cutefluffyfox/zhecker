@@ -10,6 +10,7 @@
 
 .back {
   background-color: RGB(33, 150, 240);
+  border-width: 0px;
   height:2.5rem;
   width:9rem;
   border-radius: 4px;
