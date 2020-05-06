@@ -4,9 +4,16 @@
 <link rel="stylesheet" href="../static/style/create_task_style.css" />
 <link rel="stylesheet" href="../static/style/alert_style.css" />
 <button class="back" onclick="window.history.back()">Назад</button>
+
 {% if creator %}
 <div class="d1">
   <form action="/edit_task/{{ task_id }}" method="POST" enctype="multipart/form-data" novalidate>
+      {% if verdict| length != 0 %}
+        <div class="verdict">
+          <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ verdict }}
+        </div>
+      {% endif %}
     {{ form.hidden_tag() }}
     <p>
       {{ form.title.label }}<br>

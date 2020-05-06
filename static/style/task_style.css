@@ -49,14 +49,15 @@ textarea {
 }
 
 .button {
+  background-color: RGB(33, 150, 240);
   height:2rem;
-  width:5rem;
+  width:35rem;
   border-radius: 4px;
   transition-duration: 0.4s;
 }
 
 .button:hover {
-  background-color: RGB(33, 133, 207);
+  background-color: RGB(12, 100, 170);
   color: white;
 }
 

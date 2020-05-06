@@ -1,38 +1,26 @@
-body{margin: 0;}
-div {padding: 10px 0}
-
 form {
-    margin-left: 12rem;
-    max-width: 450px;
-    border-radius: 5px;
+  margin-left: 12rem;
 }
 
-input {
+textarea {
   border-width: 0px;
-  border-color: White;
+  border-color: RGB(200, 200, 200);
   border-radius: 4px;
-  height:2rem;
-  width:25rem;
+  height:5rem;
+  width:35rem;
   font-size:1rem;
 }
 
 .button {
   background-color: RGB(33, 150, 240);
   height:2rem;
-  width:25rem;
+  width:35rem;
   border-radius: 4px;
   transition-duration: 0.4s;
+  font-size:1rem;
 }
 
 .button:hover {
   background-color: RGB(12, 100, 170);
   color: white;
-}
-
-h1 {
-    margin-left: 12rem;
-}
-
-table {
- margin-left: 12rem;
 }

@@ -7,6 +7,12 @@
 <button class="back" onclick="window.history.back()">Назад</button>
     <div class="d1">
       <form method="post" novalidate>
+          {% if verdict| length != 0 %}
+            <div class="verdict">
+              <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+              {{ verdict }}
+            </div>
+          {% endif %}
         {{ form.hidden_tag() }}
         <p>
           {{ form.creators.label }}<br>

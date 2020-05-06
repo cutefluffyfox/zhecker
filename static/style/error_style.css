@@ -1,0 +1,25 @@
+div {font-family: 'Helvetica';
+    text-align: center;
+    font-size: 2rem;
+}
+h1 {font-family: 'Helvetica';
+    font-size:20rem;
+    margin-top: 5rem;
+    text-align: center
+}
+
+body {background: RGB(214, 237, 253);}
+
+.back {
+  background-color: RGB(33, 150, 240);
+  height:3rem;
+  width:10rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+  font-size:1rem;
+}
+
+.back:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}

@@ -18,7 +18,7 @@
       </div>
 
     <table>
-      <tr> <th>id</th>  <th>Имя</th> <th>Имя пользователя</th> <th>Фамилия</th></tr>
+      <tr> {% for i in heading %} <th>{{ i }}</th> {% endfor %}</tr>
         {% for person in people %}
           <tr>
             <td>{{ person[0] }}</td> <td><a href="/profile/{{ person[0] }}">{{ person[1] }}</a></td> <td>{{ person[2] }}</td> <td>{{ person[3] }}</td>

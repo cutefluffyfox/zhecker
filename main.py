@@ -4,7 +4,7 @@ import datetime
 from os import environ
 
 from flask import Flask, render_template, redirect, request
-from flask_login import LoginManager, login_required, login_user, current_user
+from flask_login import LoginManager, login_required, login_user, current_user, logout_user
 
 import create_environment  # creatng environment variables
 from db_session import global_init
@@ -29,7 +29,7 @@ def intro():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Регистрация"""
-    error = ""
+    error, verdict = "", ""
     form = forms.RegisterForm()
     if form.validate_on_submit():
         username = form.username.data
@@ -38,6 +38,9 @@ def register():
         name = form.name.data
         surname = form.surname.data
         city = form.city.data
+
+        if len(password) < 8:
+            error = "Длина пароля должна быть больше 8 символов"
         if "@" not in email:
             error = "Неправильный формат электронной почты"
         else:
@@ -47,9 +50,11 @@ def register():
                                     name=name,
                                     surname=surname,
                                     city=city)
+
             status = new_user.get("status")
+            print(status)
             if status == "ok":
-                error = 'Мы выслали вам письмо с подтверждением аккаунта'
+                verdict = 'Мы выслали вам письмо с подтверждением аккаунта'
             elif status == 'username is already taken':
                 error = "Пользователь с таким именем пользователя уже существует"
             elif status == 'email is already taken':
@@ -57,6 +62,7 @@ def register():
 
     return render_template('register.html',
                            form=form,
+                           verdict=verdict,
                            error=error)
 
 
@@ -103,20 +109,25 @@ def profile_page(user_id):
 @login_required
 def people_page():
     """Профиль"""
-    results = []
-    people = []
+    results, people, heading = [], [], []
+
     form = forms.PeopleSearch()
     if form.validate_on_submit():
         username = form.username.data
         people = User.get_users_by_username(username)
 
+
     for result in people:
         results.append([result.id, result.username, result.name, result.surname])
+
+    if len(results) != 0:
+        heading = ["id", "Имя", "пользователя", "Имя", "Фамилия"]
 
     return render_template('people.html',
                            type="Люди",
                            form=form,
                            people=results,
+                           heading = heading,
                            current_id=current_user.id)
 
 
@@ -125,7 +136,8 @@ def people_page():
 def archive_page():
     """Архив задач"""
 
-    tasks, tasks_info = [], []
+    tasks, tasks_info = [], Task.get_tasks_by_title("")[:20]
+    print(tasks_info, "default")
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
@@ -191,8 +203,14 @@ def task_page(contest_id, task_id):
             error = "Вы уже отправляли идетичное решение"
             #дописать вердикт
 
+    author = User.get_user(task.creator).username
+    print(author)
+
     creator = User.get_user(current_user.id).creator
     print(creator)
+
+    time_limit = task.time_limit
+
     return render_template('task.html',
                            type="Задача",
                            title=title,
@@ -206,6 +224,8 @@ def task_page(contest_id, task_id):
                            contest_id=contest_id,
                            verdict=verdict,
                            error=error,
+                           author=author,
+                           time_limit=time_limit,
                            current_id=current_user.id)
 
 
@@ -258,7 +278,7 @@ def edit_task(task_id):
     task = Task.get_task(task_id)
     form = forms.EditTask()
 
-    error, new_reference = "", ""
+    error, verdict, new_reference = "", "", ""
 
     if request.method == "GET":
         print("GET success")
@@ -288,6 +308,8 @@ def edit_task(task_id):
                          reference=new_reference if new_reference != task.reference else None).get("status")
 
         print(status)
+        if status == "ok":
+            verdict = "Данные успешно изменены"
         if status == "same task has already been added":
             error = "Вы не внесли изменений"
 
@@ -303,6 +325,7 @@ def edit_task(task_id):
                            form=form,
                            task_id=task_id,
                            task_edit=edit,
+                           verdict=verdict,
                            error=error,
                            current_id=current_user.id)
 
@@ -325,8 +348,7 @@ def contests_page():
     """Турниры"""
     """это нужно заменить на sql разумеется"""
 
-    contests = []
-    contests_info = []
+    contests, contests_info = [], Contest.get_contest_by_title("")[1:21]
     form = forms.ContestSearch()
     if form.validate_on_submit():
         title = form.title.data
@@ -383,7 +405,7 @@ def contest_page(contest_id):
 @app.route('/edit_contest/<int:contest_id>', methods=['GET', 'POST'])
 @login_required
 def edit_contest(contest_id):
-    error = ""
+    error, verdict = "", ""
     form = forms.CreateContest()
     contest = Contest.get_contest(contest_id)
 
@@ -432,7 +454,9 @@ def edit_contest(contest_id):
                                 start_time=new_start if new_start != contest.start_time else None,
                                 end_time=new_end if new_end != contest.end_time else None).get("status")
         print(status)
-        if status == "same contest has already been added":
+        if status == "ok":
+            verdict = "Данные успешно изменены"
+        elif status == "same contest has already been added":
             error = "Не были внесены изменения"
 
     creator = User.get_user(current_user.id).creator
@@ -449,6 +473,7 @@ def edit_contest(contest_id):
                            contest_edit=edit,
                            error=error,
                            creator=creator,
+                           verdict=verdict,
                            current_id=current_user.id,
                            contest_id=contest_id)
 
@@ -538,6 +563,8 @@ def results_page(contest_id):
 def settings():
     """Настройки"""
     form = forms.ChangeSettings()
+    user = User.get_user(current_user.id)
+    error, verdict = "", ""
 
     if request.method == "GET":
         form.username.data = current_user.username
@@ -554,23 +581,53 @@ def settings():
         new_surname = form.surname.data
         new_city = form.city.data
 
-        User.get_user(current_user.id).change_data(username=new_username if new_username != current_user.username else None,
-                                                   email=new_email if new_email != current_user.email else None,
-                                                   name=new_name if new_name != current_user.name else None,
-                                                   surname=new_surname if new_surname != current_user.surname else None,
-                                                   city=new_city if new_city != current_user.city else None,
-                                                   password=new_password if new_password != current_user.password else None)
+        if len(new_password) < 8 and len(new_password) != 0:
+            error = "Длина пароля должна быть больше 8 символов"
+
+        if len(error) == 0:
+            if len(new_password) == 0:
+                new_password = None
+
+            status = user.change_data(username=new_username if new_username != current_user.username else None,
+                                 email=new_email if new_email != current_user.email else None,
+                                 name=new_name if new_name != current_user.name else None,
+                                 surname=new_surname if new_surname != current_user.surname else None,
+                                 city=new_city if new_city != current_user.city else None,
+                                 password=new_password).get("status")
+            print(status)
+            if status == "ok":
+                verdict = "Данные успешно изменены"
 
         print(new_username, new_email, new_name, new_surname, new_city, new_password)
-        print(User.get_user(current_user.id).change_data(new_username, new_email, new_name, new_surname, new_city, new_password))
 
     creator = User.get_user(current_user.id).creator
     print(creator)
     return render_template('settings.html',
                            type="Настройки",
                            creator=creator,
+                           verdict=verdict,
+                           error=error,
                            form=form,
                            current_id=current_user.id)
+
+
+@app.route('/application', methods=['GET', 'POST'])
+@login_required
+def application():
+    form = forms.Application()
+    if form.validate_on_submit():
+        pass
+
+    return render_template("application.html",
+                           form=form,
+                           current_id=current_user.id)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
 
 
 @app.route('/email_verification', methods=['GET'])
@@ -589,9 +646,22 @@ def email_verification():
     return redirect('/register')
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('error_pages/404.html'), 404
+
+@app.errorhandler(401)
+def page_not_found(e):
+    return render_template('error_pages/401.html'), 401
+
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template('error_pages/500.html'), 500
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user(user_id)
 
 
-app.run(host=environ.get('HOST', '0.0.0.0'), port=int(environ.get("PORT", 5000)))
+app.run(host=environ.get('HOST', '0.0.0.0'),
+        port=int(environ.get("PORT", 5000)))

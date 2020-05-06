@@ -68,17 +68,16 @@ class CreateContest(FlaskForm):
     start_time = StringField('Начало', validators=[DataRequired()])
     end_date = StringField('Конец', validators=[DataRequired()])
     end_time = StringField('Конец', validators=[DataRequired()])
-    submit = SubmitField('Готово', validators=[DataRequired()])
+    submit = SubmitField('Готово')
 
 
 class ChangeSettings(FlaskForm):
-    username = StringField('Логин')
+    username = StringField('Логин', validators=[DataRequired()])
     password = PasswordField('Пароль')
-    name = StringField('Имя')
-    surname = StringField('Фамилия')
-    email = StringField('Электронная почта')
-    city = StringField('Город')
-    remember_me = BooleanField('Запомнить меня')
+    name = StringField('Имя', validators=[DataRequired()])
+    surname = StringField('Фамилия', validators=[DataRequired()])
+    email = StringField('Электронная почта', validators=[DataRequired()])
+    city = StringField('Город', validators=[DataRequired()])
     submit = SubmitField('Готово')
 
 
@@ -86,3 +85,8 @@ class CheckTask(FlaskForm):
     code_file = FileField('Файл с решением')
     written_code = TextAreaField('Решение')
     submit = SubmitField('Готово')
+
+
+class Application(FlaskForm):
+    reason = TextAreaField('Обоснование запроса', validators=[DataRequired()])
+    submit = SubmitField('Подать заявку')
