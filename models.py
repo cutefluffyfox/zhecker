@@ -487,7 +487,7 @@ class User(SqlAlchemyBase, UserMixin):
     def get_api(api_key: str):
         """Return user by api_key"""
         session = create_session()
-        return session.query(User).filter(User.api_key == api_key).first()
+        return session.query(User).filter(User.api_key == api_key, User.registered == True).first()
 
     @staticmethod
     def authorize_user(username: str, password: str):

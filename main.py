@@ -11,12 +11,14 @@ import create_environment  # creatng environment variables
 from db_session import global_init
 import forms
 from models import User, Contest, Task, __init__, Attempt
+import resources
 
 
 global_init('database.db')
 __init__()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = environ['APP_KEY']
+api = Api(app)
 login_manager = LoginManager(app)
 
 
@@ -590,18 +592,6 @@ def email_verification():
     return redirect('/register')
 
 
-@app.route('/creator_confirmation', methods=['GET'])
-def creator_confirmation():
-    action_type = request.args.get('action_type')
-    user_id = request.args.get('user_id')
-    confirmation_key = request.args.get('confirmation_key')
-    user = None
-    if action_type == 'submit':
-        pass
-    elif action_type == 'deny':
-        pass
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user(user_id)
@@ -620,6 +610,15 @@ def page_not_found(e):
 @app.errorhandler(500)
 def page_not_found(e):
     return render_template('error_pages/500.html'), 500
+
+
+# common access
+api.add_resource(resources.MeResource, '/api/v1/me')  # get, put
+api.add_resource(resources.TasksResource, 'api/v1/tasks')  # get
+api.add_resource(resources.ContestsResource, '/api/v1/contests')  # get
+api.add_resource(resources.ContestResource, '/api/v1/contests/<int:contest_id>')  # get, put
+api.add_resource(resources.ContestTaskResource, '/api/v1/contests/<int:contest_id>/<int:task_id>')  # get, post
+api.add_resource(resources.AttemptResource, '/api/v1/attempts/<int:attempt_id>')  # get
 
 
 app.run(host=environ.get('HOST', '0.0.0.0'), port=int(environ.get("PORT", 5000)))
