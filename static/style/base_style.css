@@ -1,11 +1,6 @@
 :root {
   font-size: 16px;
   font-family: 'Helvetica';
-  --text-primary: #b6b6b6;
-  --text-secondary: #ececec;
-  --bg-primary: #23232e;
-  --bg-secondary: #141418;
-  --transition-speed: 600ms;
 }
 
 h1 {
@@ -36,4 +31,28 @@ input {
 .button:hover {
   background-color: RGB(12, 100, 170);
   color: white;
+}
+
+ul {
+    list-style-type: none;
+    margin: -0.5rem;
+    padding: 0;
+    overflow: hidden;
+    background-color: RGB(33, 150, 240);
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+li a:hover {
+    background-color: RGB(12, 100, 170);
 }

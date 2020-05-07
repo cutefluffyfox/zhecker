@@ -4,19 +4,22 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style/intro_style.css') }}">
+        <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Helvetica">
         <link rel="SHORTCUT ICON" href="{{ url_for('static', filename='code.ico') }}" type="image/ico">
         <style>body {background: RGB(214, 237, 253);}</style>
         <title>Zhecker</title>
-
     </head>
 
     <body>
         <h2>Система для организации соревнований по программированию Zhecker</h2>
         <header>
             <nav>
-                <a href=/login>Вход</a>
-                <a href=/register>Регистрация</a>
+                <ul>
+                    <li><a href=/login>Вход</a></li>
+                    <li><a href=/register>Регистрация</a></li>
+                </ul>
             </nav>
         </header>
 
@@ -25,11 +28,11 @@
 
 
              <a href="/register">Регистрация </a>позволит Вам:
-                 <ul>
-                    <li>Принимать участие в соревнованиях</li>
-                    <li>Решать задачи из архива</li>
-                    <li>Наблюдать свои достижения в общей рейтинговой таблице участников</li>
-                 </ul>
+                 <ol>
+                    <li>Принимать участие в соревнованиях</li><br>
+                    <li>Решать задачи из архива</li><br>
+                    <li>Налюдать свои достижения в общей рейтинговой таблице участников</li><br>
+                 </ol>
          </div>
 
         <div>

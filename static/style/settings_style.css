@@ -46,3 +46,19 @@ input {
   background-color: RGB(12, 100, 170);
   color: white;
 }
+
+.delete {
+  margin-left: 12rem;
+  background-color: RGB(33, 150, 240);
+  height:2rem;
+  width:37rem;
+  border-radius: 4px;
+  margin-right: 1rem;
+  transition-duration: 0.4s;
+  font-size:1rem;
+}
+
+.delete:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}

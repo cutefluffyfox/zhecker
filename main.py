@@ -53,11 +53,15 @@ def register():
                                     name=name,
                                     surname=surname,
                                     city=city)
+
             status = new_user.get("status")
+            print(status)
             if status == "ok":
                 verdict = 'Мы выслали вам письмо с подтверждением аккаунта'
             elif status == 'username is already taken':
                 error = "Пользователь с таким именем пользователя уже существует"
+            elif status == "email not send":
+                error = "Не удалось отправить письмо"
             elif status == 'email is already taken':
                 error = "Пользователь с такой электронной почтой уже существует"
 
@@ -533,12 +537,15 @@ def results_page(contest_id):
     if current_user.id == str(contest.creators):
         edit = True
 
-    rating = contest.get_rating()
+    rating = list(map(list, contest.get_rating()))
     print(rating)
-    rating = [User.get_user(i.get("user_id")) for i in rating]
-    rating = [[i.username, i.name, i.surname] for i in rating]
-    tasks = [Task.get_task(i) for i in list(map(int, contest.tasks.split(",")))]
-    tasks = [[i.id, i.title] for i in tasks]
+    people = [[i[0].username, i[0].name, i[0].surname, i[2]] for i in rating]
+    print(people)
+    points = [i[1] for i in rating]
+    print([points])
+
+    tasks = [[i.id, i.title] for i in contest.get_tasks()]
+    print(tasks)
 
     creator = User.get_user(current_user.id).creator
     print(creator)
@@ -547,7 +554,8 @@ def results_page(contest_id):
                            title=title,
                            tasks=tasks,
                            create=creator,
-                           people_info=rating,
+                           people_info=people,
+                           score_info=points,
                            contest_edit=edit,
                            current_id=current_user.id,
                            contest_id=contest_id)
@@ -630,20 +638,36 @@ def creator_confirmation():
 @app.route('/application', methods=['GET', 'POST'])
 @login_required
 def application():
+    error, verdict = "", ""
     user = User.get_user(current_user.id)
     form = forms.Application()
     if form.validate_on_submit():
-        pass
+        reason = form.reason.data
+        if len(reason) < 8:
+            error = ""
+        if len(error) == 0:
+            user.send_creator_email(reason)
+            verdict = "Запрос успешно отправлен"
 
     return render_template("application.html",
                            form=form,
-                           current_id=current_user.id)
+                           current_id=current_user.id,
+                           error=error,
+                           verdict=verdict)
 
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    return redirect("/")
+
+
+@app.route('/delete')
+@login_required
+def delete():
+    user = User.get_user(current_user.id)
+    user.delete_user()
     return redirect("/")
 
 

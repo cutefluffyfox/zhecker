@@ -18,6 +18,12 @@
 
           <p>
             {{ form.submit(type="submit", class="button") }}
+      {% if error| length != 0 %}
+        <div class="alert">
+          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ error }}
+        </div>
+      {% endif %}
       </form>
     </div>
 {% endblock %}
