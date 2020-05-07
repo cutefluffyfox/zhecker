@@ -1,7 +1,7 @@
 import sqlalchemy
 from db_session import SqlAlchemyBase, create_session
 from flask_login import UserMixin
-from random import randint
+from random import choice
 from hashlib import sha3_256
 from time import time
 from test_system import Checker
@@ -13,7 +13,7 @@ import threading
 def __init__():
     session = create_session()
     if Contest.get_contest(contest_id=0) is None:
-        session.add(Contest(id=0, creators='', title='Tasks', description='Contest with all tasks', start_time=0, end_time=pow(2, 63) - 1, tasks=''))
+        session.add(Contest(id=0, creators='', title='Tasks', description='Contest with all tasks', start_time=0, end_time=pow(2, 34), tasks=''))
         session.commit()
 
 
@@ -178,7 +178,7 @@ class Task(SqlAlchemyBase):
             'least_success': ~Task.successful,
         }
         session = create_session()
-        return session.query(Task).order_by(sqlalchemy.desc(sort[sort_type])).all()
+        return session.query(Task).order_by(sqlalchemy.desc(sort.get(sort_type, sort['easy']))).all()
 
     @staticmethod
     def get_task(task_id: int):
@@ -279,9 +279,13 @@ class Contest(SqlAlchemyBase):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
+    def get_user_results(self, user_id: int):
+        """Return [Task(**kwargs), Attempt(**kwargs)] by user_id for """
+        return [(task, Attempt.get_best_result(contest_id=self.id, task_id=task.id, user_id=user_id)) for task in self.get_tasks()]
+
     def get_tasks(self):
         """Return [Task(**kwargs), ...]"""
-        return [Task.get_task(task_id) for task_id in map(int, self.tasks.split(','))]
+        return [Task.get_task(task_id) for task_id in map(int, self.tasks.split(','))] if self.tasks else []
 
     def get_creators(self):
         """Return [User(**kwargs), ...]"""
@@ -290,7 +294,7 @@ class Contest(SqlAlchemyBase):
     def get_rating(self):
         """Return [{'task_id': int, 'user_id': int, 'score': int, 'attempt': int}, ...]"""
         session = create_session()
-        return [row._asdict() for row in session.query(Attempt.task_id.label('task_id'), Attempt.user_id.label('user_id'), sqlalchemy.func.max(Attempt.score).label('score'), sqlalchemy.func.count().label('attempt')).filter(Attempt.contest_id == self.id).group_by(Attempt.task_id, Attempt.user_id).order_by(sqlalchemy.desc('score'))]
+        return sorted([(User.get_user(user[0]), [Attempt.get_best_result(self.id, task.id, user[0]) for task in self.get_tasks()], Attempt.get_tasks_sum(self.id, user[0])) for user in session.query(Attempt.user_id).filter(Attempt.contest_id == self.id).distinct()], key=lambda a: a[2], reverse=True)
 
     def delete_contest(self):
         """Delete contest from database"""
@@ -299,7 +303,17 @@ class Contest(SqlAlchemyBase):
         session.commit()
 
     @staticmethod
-    def get_contest(contest_id):
+    def get_all(sort_type='new'):
+        """Return [Contest(**kwargs), ...] sorted by sort_type (see models.py -> class Contest() -> method get_all())"""
+        sort = {
+            'new': Contest.start_time,
+            'old': ~Contest.start_time,
+        }
+        session = create_session()
+        return session.query(Contest).order_by(sqlalchemy.desc(sort.get(sort_type, sort['new']))).all()
+
+    @staticmethod
+    def get_contest(contest_id: int):
         """Return Contest(**kwargs) by contest_id or None if id is invalid"""
         session = create_session()
         return session.query(Contest).filter(Contest.id == contest_id).first()
@@ -361,6 +375,7 @@ class User(SqlAlchemyBase, UserMixin):
     creator = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
     verification = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     registered = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+    api_key = sqlalchemy.Column(sqlalchemy.String, nullable=True, unique=True)
 
     def change_data(self, username=None, email=None, name=None, surname=None, city=None, password=None) -> dict:
         """
@@ -371,12 +386,12 @@ class User(SqlAlchemyBase, UserMixin):
         """
         try:
             session = create_session()
-            assert username is None or type(username) == str, 'invalid username type, expected str or None'
-            assert email is None or type(email) == str, 'invalid email type, expected str or None'
-            assert name is None or type(name) == str, 'invalid name type, expected str or None'
-            assert surname is None or type(surname) == str, 'invalid surname type, expected str or None'
-            assert city is None or type(city) == str, 'invalid city type, expected str or None'
-            assert password is None or type(password) == str, 'invalid password type, expected str or None'
+            assert username is None or type(username) == str and username, 'invalid username type, expected str or None'
+            assert email is None or type(email) == str and email, 'invalid email type, expected str or None'
+            assert name is None or type(name) == str and name, 'invalid name type, expected str or None'
+            assert surname is None or type(surname) == str and surname, 'invalid surname type, expected str or None'
+            assert city is None or type(city) == str and city, 'invalid city type, expected str or None'
+            assert password is None or type(password) == str and password, 'invalid password type, expected str or None'
             assert len(session.query(User).filter(User.username == username).all()) == 0 or username is None, 'username is already taken'
             assert len(session.query(User).filter(User.email == email).all()) == 0 or email is None, 'email is already taken'
             user = session.query(User).filter(User.id == self.id).first()
@@ -397,12 +412,37 @@ class User(SqlAlchemyBase, UserMixin):
         except AssertionError as ex:
             return {'status': ex.args[0]}
 
-    # def get_contest_info(self, contest_id: int):
-    #     session = create_session()
-    #     contest = Contest.get_contest(contest_id)
-    #     for task in contest.get_tasks():
-    #         pass
-    #     return info
+    def remove_api(self):
+        """Removes api_key"""
+        session = create_session()
+        user = session.query(User).filter(User.id == self.id).first()
+        if user.api_key is not None:
+            user.api_key = self.api_key = None
+        session.commit()
+
+    def generate_api(self):
+        """Return api_key, generate if api_key is None"""
+        session = create_session()
+        user = session.query(User).filter(User.id == self.id).first()
+        if user.api_key is None:
+            api_key = self.__generate_random()
+            while session.query(User).filter(User.api_key == api_key).all():
+                api_key = self.__generate_random()
+            user.api_key = self.api_key = api_key
+        session.commit()
+        return user.api_key
+
+    def send_creator_email(self, message: str):
+        """Send email to become creator"""
+        session = create_session()
+        user = session.query(User).filter(User.id == self.id).first()
+        user.verification = self.verification = self.__generate_random(50)
+        session.commit()
+        send_email(environ['MAIL_LOGIN_GOOGLE'], content_type='get_creator', message=message, user_id=self.id, confirmation_key=self.verification)
+
+    @staticmethod
+    def __generate_random(length=150):
+        return ''.join([choice('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM') for _ in range(length)])
 
     def delete_user(self):
         """Delete user from database"""
@@ -444,6 +484,12 @@ class User(SqlAlchemyBase, UserMixin):
         return session.query(User).filter(User.id == user_id, User.registered == True).first()
 
     @staticmethod
+    def get_api(api_key: str):
+        """Return user by api_key"""
+        session = create_session()
+        return session.query(User).filter(User.api_key == api_key).first()
+
+    @staticmethod
     def authorize_user(username: str, password: str):
         """Return User(**kwargs) by username and not hashed password or None if username or password is invalid"""
         session = create_session()
@@ -471,6 +517,8 @@ class User(SqlAlchemyBase, UserMixin):
             assert city is None or type(city) == str, 'invalid city type, expected str or None'
             assert len(session.query(User).filter(User.username == username).all()) == 0, 'username is already taken'
             assert len(session.query(User).filter(User.email == email).all()) == 0, 'email is already taken'
+            verification_key = User.__generate_random(50)
+            assert send_email(email, content_type='verification', verification_key=verification_key, email=email), 'email not send'
             session.add(User(username=username,
                              email=email,
                              password=User.__generate_password(password),
@@ -478,10 +526,9 @@ class User(SqlAlchemyBase, UserMixin):
                              surname=surname,
                              city=city,
                              register_date=int(time()),
-                             verification="".join([chr(randint(65, 90)) if randint(0, 1) else chr(randint(97, 122)) for _ in range(30)])))
+                             verification=verification_key))
             session.commit()
             user = session.query(User).filter(User.username == username).first()
-            assert send_email(user.email, content_type='verification', verification_key=user.verification, email=email), 'email not send'
             return {'status': 'ok', 'id': user.id}
         except AssertionError as ex:
             return {'status': ex.args[0]}
@@ -523,8 +570,14 @@ class Attempt(SqlAlchemyBase):
             return {'status': ex.args[0]}
 
     def retry(self):
+        """Retry attempt and change values if something changed"""
         thread = threading.Thread(target=Checker.check_attempt, args=(self.id,))
         thread.start()
+
+    def get_tests_statuses(self):
+        """Return [Trial(**kwargs) by attempt_id]"""
+        session = create_session()
+        return session.query(Trial).filter(Trial.attempt_id == self.id).all()
 
     @staticmethod
     def get_attempt(attempt_id: int):
@@ -533,9 +586,26 @@ class Attempt(SqlAlchemyBase):
         return session.query(Attempt).filter(Attempt.id == attempt_id).first()
 
     @staticmethod
-    def get_best_result(contest_id: int, task_id: int, user_id: int):
+    def get_attempts(contest_id: int, task_id: int, user_id: int):
+        """Return [Attempt(**kwargs), ...] by contest_id, task_id, user_id"""
         session = create_session()
-        return session.query(Attempt.status, sqlalchemy.func.max(Attempt.score)).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id).all()
+        return session.query(Attempt).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id).all()
+
+    @staticmethod
+    def get_tasks_sum(contest_id, user_id: int):
+        return sum([(lambda a: a.score if a is not None else 0)(Attempt.get_best_result(contest_id, task.id, user_id)) for task in Contest.get_contest(contest_id).get_tasks()])
+
+    @staticmethod
+    def get_last_result(contest_id: int, task_id: int, user_id: int):
+        """Return new Attempt(**kwargs) by contest_id, task_id, user_id ot None if there is no attempts"""
+        session = create_session()
+        return session.query(Attempt, sqlalchemy.func.max(Attempt.time)).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id).first()[0]
+
+    @staticmethod
+    def get_best_result(contest_id: int, task_id: int, user_id: int):
+        """Return Attempt(**kwargs) with the biggest score"""
+        session = create_session()
+        return session.query(Attempt, sqlalchemy.func.max(Attempt.score)).filter(Attempt.contest_id == contest_id, Attempt.task_id == task_id, Attempt.user_id == user_id).first()[0]
 
     @staticmethod
     def add_attempt(contest_id: int, task_id: int, user_id: int, solution: str):

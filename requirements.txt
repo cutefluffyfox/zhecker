@@ -1,4 +1,5 @@
 flask
 flask-login
 flask-wtf
+flask-restful
 sqlalchemy
