@@ -611,15 +611,21 @@ def email_verification():
     action_type = request.args.get('action_type')
     email = request.args.get('email')
     verification_key = request.args.get('verification_key')
-    user = None
-    if action_type == 'submit':
-        user = User.check_verification_key(email, verification_key)
-    elif action_type == 'remove':
-        User.delete_by_verification(email, verification_key)
+    user = User.email_verification(email, verification_key, action_type)
     if user is not None:
         login_user(user, remember=True)
         return redirect('/contests')
     return redirect('/register')
+
+
+@app.route('/creator_confirmation', methods=['GET'])
+def creator_confirmation():
+    action_type = request.args.get('action_type')
+    user_id = request.args.get('user_id')
+    confirmation_key = request.args.get('confirmation_key')
+    User.creator_confirmation(user_id, confirmation_key, action_type)
+    return redirect('/contests')
+
 
 @app.route('/application', methods=['GET', 'POST'])
 @login_required

@@ -451,25 +451,30 @@ class User(SqlAlchemyBase, UserMixin):
         session.commit()
 
     @staticmethod
-    def delete_by_verification(email: str, verification_key: str):
+    def email_verification(email: str, verification_key: str, action: str):
         """Delete user by email and verification_key"""
         session = create_session()
         user = session.query(User).filter(User.email == email, User.verification == verification_key).first()
-        if user is not None and user.verification is not None:
+        if (action == 'remove' and user is not None and user.verification is not None) or (action == 'submit' and user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60):
             user.delete_user()
-
-    @staticmethod
-    def check_verification_key(email: str, verification_key: str):
-        """Return User(**kwargs) by email and verification_key or None if email/verification_key invalid or timed out"""
-        session = create_session()
-        user = session.query(User).filter(User.email == email, User.verification == verification_key).first()
-        if user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60:
+        elif action == 'submit' and user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60:
             user.registered = True
             user.verification = None
-        elif user is not None and user.verification is not None:
-            user.delete_user()
         session.commit()
-        return user
+        return session.query(User.id == user.id).first()
+
+    @staticmethod
+    def creator_confirmation(user_id: int, confirmation_key: str, action: str):
+        """Return User(**kwargs) by email and verification_key or None if email/verification_key invalid or timed out"""
+        session = create_session()
+        user = session.query(User).filter(User.id == user_id, User.verification == confirmation_key).first()
+        if action == 'submit' and user is not None and user.verification is not None:
+            send_email(user.email, content_type='creator_confirmed', name=user.name, surname=user.surname)
+            user.verification = None
+        elif action == 'deny' and user is not None and user.verification is not None:
+            send_email(user.email, content_type='creator_denied', name=user.name, surname=user.surname)
+            user.verification = None
+        session.commit()
 
     @staticmethod
     def get_users_by_username(username: str):
