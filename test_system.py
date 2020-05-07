@@ -20,6 +20,7 @@ class Checker:
         'TS': 'test skipped',
         '?': 'in progress'
     }
+    translator = str.maketrans('`~!@#$%^&*()_+{}:"<>?/.,\';][]=-', ' ' * 31)
 
     @staticmethod
     def get_output(task_id: int, inp: str) -> (str, str):
@@ -65,11 +66,12 @@ class Checker:
             if Checker.__check_restricted(file):
                 return 'SB', ''
             result = subprocess.run([Checker.python, file], input=inp, text=True, capture_output=True, timeout=tl + Checker.time_to_start_process, start_new_session=True)
+            result.stderr = result.stderr.translate(Checker.translator)
             if result.returncode == 0 and result.stdout == out:
                 return 'OK', ''
             elif result.returncode == 0:
                 return 'WA', result.stdout
-            elif 'SyntaxError' in result.stderr:
+            elif {'SyntaxError', 'IndentationError', 'TabError'} & set(result.stderr.replace('\n', ' ').split()):
                 return 'CE', ''
             else:
                 return 'RE', ''
