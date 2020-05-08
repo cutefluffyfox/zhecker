@@ -377,7 +377,7 @@ class User(SqlAlchemyBase, UserMixin):
     registered = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
     api_key = sqlalchemy.Column(sqlalchemy.String, nullable=True, unique=True)
 
-    def change_data(self, username=None, email=None, name=None, surname=None, city=None, password=None) -> dict:
+    def change_data(self, username=None, email=None, name=None, surname=None, city=None, password=None, api=None) -> dict:
         """
         Change username/email/name/surname/city/password, return
         {'status': 'ok'}
@@ -392,6 +392,7 @@ class User(SqlAlchemyBase, UserMixin):
             assert surname is None or type(surname) == str and surname, 'invalid surname type, expected str or None'
             assert city is None or type(city) == str and city, 'invalid city type, expected str or None'
             assert password is None or type(password) == str and password, 'invalid password type, expected str or None'
+            assert type(api) == bool or api is None, 'invalid api type, expected bool or None'
             assert len(session.query(User).filter(User.username == username).all()) == 0 or username is None, 'username is already taken'
             assert len(session.query(User).filter(User.email == email).all()) == 0 or email is None, 'email is already taken'
             user = session.query(User).filter(User.id == self.id).first()
@@ -407,6 +408,11 @@ class User(SqlAlchemyBase, UserMixin):
                 user.city = self.city = city
             if password is not None:
                 user.password = self.password = self.__generate_password(password)
+            if api is not None:
+                if api:
+                    user.generate_api()
+                else:
+                    user.remove_api()
             session.commit()
             return {'status': 'ok'}
         except AssertionError as ex:
