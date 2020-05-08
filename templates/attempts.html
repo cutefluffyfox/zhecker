@@ -1,0 +1,21 @@
+{% extends "bar.html" %}
+{% block content %}
+<button class="back" onclick="window.history.back()">Назад</button><br><br><br>
+  {% if exist %}
+
+    <table>
+      <tr> <th>id</th> <th>Статус</th></tr>
+      {% for i, test in tests %}
+        <tr> <td>{{ i }}</td> <td>{{ test.status }}</td></tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    {% if error| length != 0 %}
+      <div class="alert">
+        <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+        {{ error }}
+      </div>
+    {% endif %}
+  {% endif %}
+
+{% endblock %}

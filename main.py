@@ -176,7 +176,7 @@ def archive_page():
 @login_required
 def task_page(contest_id, task_id):
     """Задача"""
-    code_file, code, status, error, verdict = "", "", "", "", ""
+    code_file, code, status, error, verdict, attempts = "", "", "", "", "", []
     time_limit, title, author, description, question, input_data, output_data, task_edit, creator, edit = 0.0, "", "", "", "", [], [], "", False, False
     form = forms.CheckTask()
 
@@ -198,31 +198,32 @@ def task_page(contest_id, task_id):
         if task.creator == current_user.id:
             edit = True
 
-
         if request.method == "POST":
             if request.files:
                 code_file = request.files["code_file"]
                 code_file = code_file.read()
                 code_file = code_file.decode('utf-8')
-                print([code_file])
+                print(code_file)
+                form.written_code.data = ""
 
         if form.validate_on_submit():
             written_code = form.written_code.data
+            form.written_code.data = ""
 
-            if len(written_code) > 0 >= len(code_file):
+            if written_code:
                 code = written_code
-
-            elif len(written_code) == 0 > len(code_file):
+            else:
                 code = code_file
 
         if len(code) != 0:
-            status = Attempt.add_attempt(contest_id, task_id, current_user.id, code).get("status")
+            attempt = Attempt.add_attempt(contest_id, task_id, current_user.id, code)
+            status = attempt.get("status")
             print(status)
             if status == "ok":
                 verdict = "Задача проверяется"
             elif status == "the same solution has already been sent":
                 error = "Вы уже отправляли идетичное решение"
-                #дописать вердикт
+
 
         author = User.get_user(task.creator).username  #-----------------------------------------обработка--------------------------
         print(author)
@@ -230,6 +231,10 @@ def task_page(contest_id, task_id):
         creator = User.get_user(current_user.id).creator
         print(creator)
         time_limit = task.time_limit
+
+        attempts = Attempt.get_attempts(contest_id, task_id, current_user.id)
+        print(attempts)
+
     else:
         exist = False
         error = "Такой задачи не существуе"
@@ -250,6 +255,7 @@ def task_page(contest_id, task_id):
                            verdict=verdict,
                            error=error,
                            author=author,
+                           attempts=attempts,
                            time_limit=time_limit,
                            current_id=current_user.id)
 
@@ -420,11 +426,11 @@ def contest_page(contest_id):
         tasks = contest.get_tasks()
         results = []
         for i in tasks:
-            results.append([i.id, i.title])
+            last_result = Attempt.get_last_result(contest_id, i.id, current_user.id)
+
+            results.append([i.id, i.title, last_result.status if last_result is not None else ""])
 
         edit = False
-        print(current_user.id, contest.creators)
-        print(type(current_user.id), type(contest.creators))
         if str(current_user.id) in contest.creators.split(","):
             edit = True
 
@@ -614,6 +620,26 @@ def results_page(contest_id):
                            contest_edit=edit,
                            current_id=current_user.id,
                            contest_id=contest_id)
+
+
+@app.route('/attempts/<int:attempt_id>', methods=['GET'])
+@login_required
+def attempts_page(attempt_id):
+    attempt = Attempt.get_attempt(attempt_id)
+    tests, error = [], ""
+    if attempt is not None:
+        exist = True
+        tests = enumerate(attempt.get_tests_statuses(), start=1)
+
+    else:
+        exist = False
+        error = "Такой попытки не существует"
+
+    return render_template('attempts.html',
+                           type="Попытки",
+                           exist=exist,
+                           tests=tests,
+                           error=error)
 
 
 @app.route('/settings', methods=['GET', 'POST'])

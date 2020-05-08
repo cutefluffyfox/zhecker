@@ -70,6 +70,15 @@
       {{ form.submit(type="submit", class="button") }}</p>
     </form>
 
+<table class="results">
+    <tr> <th>Время отправки</th> <th>id попытки</th> <th>Статус</th> <th>Баллы</th> </tr>
+    {% for attempt in attempts %}
+    <tr>
+        <td>{{ attempt.time }}</td> <td> <a href="/attempts/{{ attempt.id }}">{{ attempt.id }}</a> </td> <td>{{ attempt.status }}</td> <td>{{ attempt.score }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
 {% else %}
 {% if error| length != 0 %}
     <div class="alert">
@@ -77,6 +86,8 @@
       {{ error }}
     </div>
 {% endif %}
+
+
 
 {% endif %}
 
