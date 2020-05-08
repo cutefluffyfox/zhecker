@@ -1,8 +1,9 @@
 {% extends "bar.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/alert_style.css') }}" />
 <button class="back" onclick="window.history.back()">Назад</button>
-
+{% if exist %}
     <h1>Задачи турнира:</h1>
 
     <table>
@@ -13,4 +14,14 @@
           </tr>
         {% endfor %}
     </table>
+{% else %}
+    <br><br>
+    {% if error| length != 0 %}
+        <div class="alert">
+          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ error }}
+        </div>
+    {% endif %}
+{% endif %}
+
 {% endblock %}

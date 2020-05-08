@@ -1,10 +1,12 @@
 {% extends "bar.html" %}
 
 {% block content %}
-{% if creator %}
+
 <link rel="stylesheet" href="../static/style/create_contest_style.css" />
-<link rel="stylesheet" href="../static/style/alert_style.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='style/alert_style.css') }}" />
 <button class="back" onclick="window.history.back()">Назад</button>
+{% if exist %}
+  {% if creator %}
     <div class="d1">
       <form method="post" novalidate>
           {% if verdict| length != 0 %}
@@ -94,9 +96,19 @@
           {{ form.submit(type="submit", class="button") }}</p>
       </form>
     </div>
+  {% else %}
+  <h1>ДОСТУП ЗАПРЕЩЁН</h1>
+  <h2>Вы не можете создавать/редактировать турниры/задачи</h2>
+  {% endif %}
+
 {% else %}
-<h1>ДОСТУП ЗАПРЕЩЁН</h1>
-<h2>Вы не можете создавать/редактировать турниры/задачи</h2>
+  <br><br>
+  {% if error| length != 0 %}
+      <div class="alert">
+        <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+        {{ error }}
+      </div>
+  {% endif %}
 {% endif %}
 
 {% endblock %}

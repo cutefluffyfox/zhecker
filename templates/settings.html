@@ -3,6 +3,7 @@
 {% block content %}
 <link rel="stylesheet" href="static/style/settings_style.css"/>
 <link rel="stylesheet" href="../static/style/alert_style.css" />
+<link rel="stylesheet" href="../static/style/switch_style.css" />
 <button class="back" onclick="window.history.back()">Назад</button>
 
   <div class="d1">
@@ -33,15 +34,6 @@
                 {{ error }}
             </div>
         {% endfor %}
-
-    <p>
-    {{ form.email.label }}<br>
-    {{ form.email(class="form-control", type="email") }}<br>
-    {% for error in form.email.errors %}
-        <div class="alert alert-danger" role="alert">
-            {{ error }}
-        </div>
-    {% endfor %}
 
     <p>
         {{ form.name.label }}<br>
@@ -76,6 +68,14 @@
           {{ error }}
         </div>
       {% endif %}
+
+    <p>
+        <label class="switch">
+            {{ form.api() }}
+            <span class="slider round"></span>
+        </label>
+         {{ form.api.label }}
+    </p>
 
     <p>{{ form.submit(type="submit", class="button") }}
 

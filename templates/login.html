@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<link rel="stylesheet" href="../static/style/alert_style.css" />
 
+<link rel="stylesheet" href="../static/style/switch_style.css" />
 <h1>Вход</h1>
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
@@ -19,6 +19,14 @@
         {% for error in form.password.errors %}
             <div class="alert alert-danger" role="alert">{{ error }}</div>
         {% endfor %}
+
+    <p>
+        <label class="switch">
+            {{ form.remember_me() }}
+            <span class="slider round"></span>
+        </label>
+         {{ form.remember_me.label }}
+    </p>
 
       {% if error| length != 0 %}
         <div class="alert">

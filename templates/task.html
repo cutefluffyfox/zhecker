@@ -12,6 +12,8 @@
 
 <button class="back" onclick="window.history.back()">Назад</button><br><br><br>
 
+{% if exist %}
+
   <form action="" method="post" enctype="multipart/form-data" novalidate>
 
   {% if verdict| length != 0 %}
@@ -67,5 +69,15 @@
     <p>
       {{ form.submit(type="submit", class="button") }}</p>
     </form>
+
+{% else %}
+{% if error| length != 0 %}
+    <div class="alert">
+      <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+      {{ error }}
+    </div>
+{% endif %}
+
+{% endif %}
 
 {% endblock %}

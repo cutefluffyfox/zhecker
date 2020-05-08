@@ -76,8 +76,8 @@ class ChangeSettings(FlaskForm):
     password = PasswordField('Пароль')
     name = StringField('Имя', validators=[DataRequired()])
     surname = StringField('Фамилия', validators=[DataRequired()])
-    email = StringField('Электронная почта', validators=[DataRequired()])
     city = StringField('Город', validators=[DataRequired()])
+    api = BooleanField("Использование API")
     submit = SubmitField('Готово')
 
 
