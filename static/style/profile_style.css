@@ -1,0 +1,20 @@
+h1 {text-align: center
+    font-size: 5rem;}
+
+h2 {text-align: center
+    font-size: 2rem;}
+
+.copy {
+  background-color: RGB(33, 150, 240);
+  height:3rem;
+  width:10rem;
+  border-radius: 4px;
+  margin-right: 1rem;
+  transition-duration: 0.4s;
+  font-size:1rem;
+}
+
+.copy:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}

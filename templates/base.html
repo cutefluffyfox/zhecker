@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="SHORTCUT ICON" href="../static/code.ico" type="image/ico">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Nunito">
+
+    <link rel="stylesheet" href="../static/style/base_style.css" />
+    <link rel="stylesheet" href="../static/style/alert_style.css" />
+    <style>body {background: RGB(214, 237, 253);}</style>
+    <title>Zhecker</title>
+  </head>
+
+  <body>
+    <header>
+      <nav class="navbar">
+        <ul>
+          <li> <a class="navbar-brand" href="/login">Login</a> </li>
+          <li> <a class="navbar-brand" href="/register">Register</a> </li>
+          <li> <a class="navbar-brand" href="/intro">Homepage</a> </li>
+        </ul>
+      </nav>
+    </header>
+<!-- Begin page content -->
+    <main role="main" class="container">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

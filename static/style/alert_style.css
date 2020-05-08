@@ -1,0 +1,43 @@
+.alert {
+  padding: 12px;
+  background-color: RGB(245, 205, 209);
+  width:25rem;
+  border-radius: 4px;
+  border:3px;
+  border-width: 1px;
+  border-color: RGB(241, 184, 192);
+  color: RGB(109, 37, 46);
+}
+
+.alert_btn {
+  margin-left: 15px;
+  color: RGB(109, 37, 46);
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.verdict {
+  padding: 12px;
+  background-color: RGB(187, 216, 146);
+  width:25rem;
+  border-radius: 4px;
+  border:3px;
+  border-width: 1px;
+  border-color: RGB(241, 184, 192);
+  color: RGB(50, 66, 42);
+}
+
+.verdict_btn {
+  margin-left: 15px;
+  color: RGB(50, 66, 42);
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}

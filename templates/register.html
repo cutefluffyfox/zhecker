@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<h1>Регистрация</h1>
+<form action="" method="post" novalidate>
+
+  {% if verdict| length != 0 %}
+    <div class="verdict">
+      <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+      {{ verdict }}
+    </div>
+  {% endif %}
+
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.username.label }}<br>
+        {{ form.username(class="form-control") }}<br>
+        {% for error in form.username.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(class="form-control", type="password") }}<br>
+        {% for error in form.password.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.email.label }}<br>
+        {{ form.email(class="form-control") }}<br>
+        {% for error in form.email.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.name.label }}<br>
+        {{ form.name(class="form-control") }}<br>
+        {% for error in form.name.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.surname.label }}<br>
+        {{ form.surname(class="form-control") }}<br>
+        {% for error in form.surname.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+    <p>
+        {{ form.city.label }}<br>
+        {{ form.city(class="form-control") }}<br>
+        {% for error in form.city.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+      {% if error| length != 0 %}
+        <div class="alert">
+          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ error }}
+        </div>
+      {% endif %}
+
+    <p>{{ form.submit(type="submit", class="button") }}
+</form>
+{% endblock %}

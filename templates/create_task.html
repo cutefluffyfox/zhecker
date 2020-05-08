@@ -1,0 +1,61 @@
+{% extends "bar.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/style/create_task_style.css" />
+<link rel="stylesheet" href="../static/style/alert_style.css" />
+<button class="back" onclick="window.history.back()">Назад</button>
+{% if creator %}
+<div class="d1">
+  <form action="/create_task" method="POST" enctype="multipart/form-data" novalidate>
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.title.label }}<br>
+      {{ form.title(class="control") }}<br>
+      {% for error in form.title.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endfor %}
+
+    <p>
+      {{ form.description.label }}<br>
+      {{ form.description(class="control") }}<br>
+      {% for error in form.description.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
+      {{ form.time_limit.label }}<br>
+      {{ form.time_limit(class="control") }}<br>
+      {% for error in form.time_limit.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
+      {{ form.reference.label }}<br>
+      {{ form.reference(type="file", class="form-control-file") }}<br>
+      {% for error in form.reference.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
+      {{ form.tests.label }}<br>
+      {{ form.tests(type="file", class="form-control-file") }}<br>
+      {% for error in form.tests.errors %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endfor %}
+
+    <p>
+      {{ form.submit(type="submit", class="button") }}</p>
+      {% if error| length != 0 %}
+          <div class="alert">
+            <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+            {{ error }}
+          </div>
+      {% endif %}
+  </form>
+</div>
+{% else %}
+<h1>ДОСТУП ЗАПРЕЩЁН</h1>
+<h2>Вы не можете создавать/редактировать турниры/задачи</h2>
+{% endif %}
+
+{% endblock %}

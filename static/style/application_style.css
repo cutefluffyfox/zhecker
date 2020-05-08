@@ -1,0 +1,26 @@
+form {
+  margin-left: 12rem;
+}
+
+textarea {
+  border-width: 0px;
+  border-color: RGB(200, 200, 200);
+  border-radius: 4px;
+  height:5rem;
+  width:35rem;
+  font-size:1rem;
+}
+
+.button {
+  background-color: RGB(33, 150, 240);
+  height:2rem;
+  width:35rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+  font-size:1rem;
+}
+
+.button:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}

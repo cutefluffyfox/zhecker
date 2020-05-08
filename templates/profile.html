@@ -1,0 +1,23 @@
+{% extends "bar.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/style/alert_style.css" />
+<link rel="stylesheet" href="../static/style/profile_style.css" />
+<script type="text/javascript" src="../static/copy.js"></script>
+  <button class="back" onclick="window.history.back()">Назад</button>
+  <br><br>
+
+  {% if error| length != 0 %}
+    <div class="alert">
+      <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <h1>{{ name }} {{ surname }}</h1>
+  <h2>{{ email }}</h2>
+  <h2>{{ city }}</h2>
+  <p> <input type="hidden" value="{{ api }}" id="myInput"> <button class="copy" onclick="copy_api()">Скопировать API</button> </p>
+
+
+{% endblock %}

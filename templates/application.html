@@ -1,0 +1,39 @@
+{% extends "bar.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/style/application_style.css" />
+<link rel="stylesheet" href="../static/style/alert_style.css"/>
+
+<button class="back" onclick="window.history.back()">Назад</button>
+
+    <div class="d1">
+      <form action="" method="post" novalidate>
+
+  {% if verdict| length != 0 %}
+    <div class="verdict">
+      <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+      {{ verdict }}
+    </div>
+  {% endif %}
+
+          {{ form.hidden_tag() }}
+          <p>
+            {{ form.reason.label }}<br>
+            {{ form.reason(class="control") }}<br>
+            {% for error in form.reason.errors %}
+              <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+
+          <p>
+            {{ form.submit(type="submit", class="button") }}
+
+      {% if error| length != 0 %}
+        <div class="alert">
+          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ error }}
+        </div>
+      {% endif %}
+
+      </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style/intro_style.css') }}">
+        <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Nunito">
+        <link rel="SHORTCUT ICON" href="{{ url_for('static', filename='code.ico') }}" type="image/ico">
+        <style>body {background: RGB(214, 237, 253);}</style>
+        <title>Zhecker</title>
+    </head>
+
+    <body>
+        <h2>Система для организации соревнований по программированию Zhecker</h2>
+        <header>
+            <nav>
+                <ul>
+                    <li><a href=/login>Вход</a></li>
+                    <li><a href=/register>Регистрация</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div style="width: 99%; padding: 4px;">
+            <span class="messages" id="messages"></span><br>
+
+
+             <a href="/register">Регистрация </a>позволит Вам:
+                 <ol>
+                    <li>Принимать участие в соревнованиях</li><br>
+                    <li>Решать задачи из архива</li><br>
+                    <li>Налюдать свои достижения в общей рейтинговой таблице участников</li><br>
+                 </ol>
+         </div>
+
+        <div>
+            текущий пользователь: анонимный
+            <br>
+            <br>
+            <a href="https://vk.com/softitran">разработка ©2020</a>
+            <br>
+         </div>
+    </body>
+</html>
+

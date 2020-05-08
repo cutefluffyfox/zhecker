@@ -1,0 +1,38 @@
+body{margin: 0;}
+div {padding: 10px 0}
+
+form {
+    margin-left: 12rem;
+    max-width: 450px;
+    border-radius: 5px;
+}
+
+input {
+  border-width: 0px;
+  border-color: White;
+  border-radius: 4px;
+  height:2rem;
+  width:25rem;
+  font-size:1rem;
+}
+
+.button {
+  background-color: RGB(33, 150, 240);
+  height:2rem;
+  width:25rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+}
+
+.button:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}
+
+h1 {
+    margin-left: 12rem;
+}
+
+table {
+ margin-left: 12rem;
+}

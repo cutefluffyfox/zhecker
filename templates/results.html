@@ -1,0 +1,46 @@
+{% extends "bar.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/style/results_style.css"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style/alert_style.css') }}" />
+
+<button class="back" onclick="window.history.back()">Назад</button>
+{% if exist %}
+<h1>{{ title }}</h1>
+  <table class="table table-striped">
+      <tr>
+        <th scope="col">Место</th>
+        <th scope="col">Имя пользователя</th>
+        <th scope="col">Имя</th>
+        <th scope="col">Фамилия</th> {% for task in tasks %}
+        <th scope="col"> <a href="/task/{{ contest_id }}/{{ task[0] }}"> {{ task[1] }}</a></th > {% endfor %}
+        <th scope="col">Общие баллы</th>
+      </tr>
+
+    {% for i, (user, tasks, score) in rating %}
+      {% if user %}
+      <tr>
+
+        <th scope="row">{{ i + 1 }}</th>
+        <td> {{ user.username }} </td>
+        <td> {{ user.name }}</td>
+        <td> {{ user.surname }} </td>
+          {% for task in tasks %}
+        <td> {% if task == None %} 0 {% else %} {{ task.score }} {% endif %}</td>
+          {% endfor %}
+        <td> {{ score }} </td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+  </table><br>
+
+{% else %}
+    <br><br>
+    {% if error| length != 0 %}
+        <div class="alert">
+          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+          {{ error }}
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,58 @@
+:root {
+  font-size: 16px;
+  font-family: 'Nunito';
+}
+
+h1 {
+  margin-left: 16rem;
+}
+
+form {
+  text-align: center;
+}
+
+input {
+  border-width: 0px;
+  border-color: White;
+  border-radius: 4px;
+  height: 2.5rem;
+  width: 60rem;
+  font-size: 1rem;
+}
+
+.button {
+  background-color: RGB(33, 150, 240);
+  height: 2rem;
+  width: 25rem;
+  border-radius: 4px;
+  transition-duration: 0.4s;
+}
+
+.button:hover {
+  background-color: RGB(12, 100, 170);
+  color: white;
+}
+
+ul {
+    list-style-type: none;
+    margin: -0.5rem;
+    padding: 0;
+    overflow: hidden;
+    background-color: RGB(33, 150, 240);
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+li a:hover {
+    background-color: RGB(12, 100, 170);
+}
