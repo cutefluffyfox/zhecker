@@ -2,10 +2,13 @@ from json import load
 import time
 import datetime
 from os import environ
+import atexit
 
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
 from flask_restful import Api
+from requests import get
+from apscheduler.schedulers.background import BackgroundScheduler
 
 import create_environment  # creatng environment variables
 from db_session import global_init
@@ -20,6 +23,18 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = environ['APP_KEY']
 api = Api(app)
 login_manager = LoginManager(app)
+
+
+def update_server():
+    print('Update background task: ', get('https://zhecker.herokuapp.com/'))
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=update_server, trigger="interval", minutes=15)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 
 @app.route('/')
