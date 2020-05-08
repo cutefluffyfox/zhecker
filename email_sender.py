@@ -29,8 +29,8 @@ def send_email(receiver: str, content_type: str, **kwargs) -> bool:
         plain_text = email_types[f"{content_type}_plain"]
         html_text = email_types[content_type]
         for key in kwargs:
-            plain_text = plain_text.replace(f"%{key}%", kwargs[key])
-            html_text = html_text.replace(f"%{key}%", kwargs[key])
+            plain_text = plain_text.replace(f"%{key}%", str(kwargs[key]))
+            html_text = html_text.replace(f"%{key}%", str(kwargs[key]))
         message.attach(MIMEText(plain_text, 'plain'))
         message.attach(MIMEText(html_text, 'html'))
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:

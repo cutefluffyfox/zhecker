@@ -455,13 +455,14 @@ class User(SqlAlchemyBase, UserMixin):
         """Delete user by email and verification_key"""
         session = create_session()
         user = session.query(User).filter(User.email == email, User.verification == verification_key).first()
-        if (action == 'remove' and user is not None and user.verification is not None) or (action == 'submit' and user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60):
+        user_id = user.id
+        if (action == 'remove' and user is not None and user.verification is not None) or (action == 'submit' and user is not None and user.verification is not None and int(time()) - user.register_date > 60 * 60):
             user.delete_user()
         elif action == 'submit' and user is not None and user.verification is not None and int(time()) - user.register_date <= 60 * 60:
             user.registered = True
             user.verification = None
         session.commit()
-        return session.query(User.id == user.id).first()
+        return session.query(User).filter(User.id == user_id, User.registered == True).first()
 
     @staticmethod
     def creator_confirmation(user_id: int, confirmation_key: str, action: str):
@@ -471,6 +472,7 @@ class User(SqlAlchemyBase, UserMixin):
         if action == 'submit' and user is not None and user.verification is not None:
             send_email(user.email, content_type='creator_confirmed', name=user.name, surname=user.surname)
             user.verification = None
+            user.creator = True
         elif action == 'deny' and user is not None and user.verification is not None:
             send_email(user.email, content_type='creator_denied', name=user.name, surname=user.surname)
             user.verification = None
