@@ -219,13 +219,12 @@ def task_page(contest_id, task_id):
                 code_file = code_file.read()
                 code_file = code_file.decode('utf-8')
                 print(code_file)
-                form.written_code.data = ""
 
         if form.validate_on_submit():
             written_code = form.written_code.data
             code = written_code if written_code else code_file
-            form.written_code.data = ""
 
+        print(code)
         if len(code) != 0:
             attempt = Attempt.add_attempt(contest_id, task_id, current_user.id, code)
             status = attempt.get("status")
@@ -234,6 +233,7 @@ def task_page(contest_id, task_id):
                 verdict = "Задача проверяется"
             elif status == "the same solution has already been sent":
                 error = "Вы уже отправляли идетичное решение"
+        form.written_code.data = ""
 
 
         author = User.get_user(task.creator).username  #-----------------------------------------обработка--------------------------
