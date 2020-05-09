@@ -223,12 +223,8 @@ def task_page(contest_id, task_id):
 
         if form.validate_on_submit():
             written_code = form.written_code.data
+            code = written_code if written_code else code_file
             form.written_code.data = ""
-
-            if written_code:
-                code = written_code
-            else:
-                code = code_file
 
         if len(code) != 0:
             attempt = Attempt.add_attempt(contest_id, task_id, current_user.id, code)
