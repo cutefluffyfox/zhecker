@@ -1,6 +1,7 @@
 {% extends "bar.html" %}
 {% block content %}
 
+
 <head>
     <script data-require="angularjs@1.3.6" data-semver="1.3.6" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.6/angular.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style/task_style.css') }}" />
@@ -13,82 +14,81 @@
 <button class="back" onclick="window.history.back()">Назад</button><br><br><br>
 
 {% if exist %}
+    {% if current_time < start_time %}
+        <h1>Контест еще не начался</h1>
+    {% else %}
 
-  <form action="" method="post" enctype="multipart/form-data" novalidate>
+          <form action="" method="post" enctype="multipart/form-data" novalidate>
 
-  {% if verdict| length != 0 %}
-    <div class="verdict">
-        <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
-        {{ verdict }}
-    </div>
-  {% endif %}
+          {% if verdict| length != 0 %}
+            <div class="verdict">
+                <span class="verdict_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                {{ verdict }}
+            </div>
+          {% endif %}
 
-  <h1>{{ title }} {{ status }} Создатель: {{ author }}</h1>
-  <h3>{{ question }}</h3>
+          <h1>{{ title }} {{ status }} Создатель: {{ author }}</h1>
+          <h3>{{ question }}</h3>
 
-  <table>
-    <tr> <th>Ввод</th>  <th>Вывод</th> </tr>
-    {% for i in range(input_data| length) %}
-      <tr>
-        <td> {% for j in  input_data[i]%} {{ j }} <br>{% endfor %}</td><td> {% for z in  output_data[i]%} {{ z }}<br>{% endfor %}</td><br>
-      </tr>
-    {% endfor %}
-  </table>
+          <table>
+            <tr> <th>Ввод</th>  <th>Вывод</th> </tr>
+            {% for i in range(input_data| length) %}
+              <tr>
+                <td> {% for j in  input_data[i]%} {{ j }} <br>{% endfor %}</td><td> {% for z in  output_data[i]%} {{ z }}<br>{% endfor %}</td><br>
+              </tr>
+            {% endfor %}
+          </table>
 
-      <p>Ограничение по времени: {{ time_limit }} сек</p>
-      <br>
+              <p>Ограничение по времени: {{ time_limit }} сек</p>
+              <br>
 
-    {{ form.hidden_tag() }}
-    <p>
-      {{ form.code_file.label }}<br>
-      {{ form.code_file(type="file", class="form-control-file") }}<br>
-      {% for error in form.code_file.errors %}
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
-      {% endfor %}
-      <br>
-      <br>
+            {{ form.hidden_tag() }}
+            <p>
+              {{ form.code_file.label }}<br>
+              {{ form.code_file(type="file", class="form-control-file") }}<br>
+              {% for error in form.code_file.errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+              {% endfor %}
+              <br>
+              <br>
 
-    {{ form.written_code.label }}
-    <p>
-    <div class="container">
-      <div class="line-nums"><span>1</span></div>
-        {{ form.written_code(class="control", id="demo", placeholder="Ваш код здесь") }}<br>
-        {% for error in form.written_code.errors %}
-          <div class="alert alert-danger" role="alert">{{ error }}</div>
-        {% endfor %}
-    </div>
-      <br>
+            {{ form.written_code.label }}
+            <p>
+            <div class="container">
+              <div class="line-nums"><span>1</span></div>
+                {{ form.written_code(class="control", id="demo", placeholder="Ваш код здесь") }}<br>
+                {% for error in form.written_code.errors %}
+                  <div class="alert alert-danger" role="alert">{{ error }}</div>
+                {% endfor %}
+            </div>
+              <br>
 
-    {% if error| length != 0 %}
-        <div class="alert">
-          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
-          {{ error }}
-        </div>
+            {% if error| length != 0 %}
+                <div class="alert">
+                  <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                  {{ error }}
+                </div>
+            {% endif %}
+
+            <p>
+              {{ form.submit(type="submit", class="button") }}</p>
+            </form>
+
+        <table class="results">
+            <tr> <th>Время отправки</th> <th>id попытки</th> <th>Статус</th> <th>Баллы</th> </tr>
+            {% for attempt in attempts %}
+            <tr>
+                <td>{{ attempt.time }}</td> <td> <a href="/attempts/{{ attempt.id }}">{{ attempt.id }}</a> </td> <td>{{ attempt.status }}</td> <td>{{ attempt.score }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+            {% if error| length != 0 %}
+                <div class="alert">
+                  <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+                  {{ error }}
+                </div>
+            {% endif %}
     {% endif %}
-
-    <p>
-      {{ form.submit(type="submit", class="button") }}</p>
-    </form>
-
-<table class="results">
-    <tr> <th>Время отправки</th> <th>id попытки</th> <th>Статус</th> <th>Баллы</th> </tr>
-    {% for attempt in attempts %}
-    <tr>
-        <td>{{ attempt.time }}</td> <td> <a href="/attempts/{{ attempt.id }}">{{ attempt.id }}</a> </td> <td>{{ attempt.status }}</td> <td>{{ attempt.score }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-{% else %}
-{% if error| length != 0 %}
-    <div class="alert">
-      <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
-      {{ error }}
-    </div>
 {% endif %}
-
-
-
-{% endif %}
-
 {% endblock %}

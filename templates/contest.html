@@ -3,26 +3,29 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='style/alert_style.css') }}" />
 <button class="back" onclick="window.history.back()">Назад</button>
+
 {% if exist %}
-    <h1>Задачи турнира:</h1>
+    {% if current_time < start_time %}
+        <h1>Контест еще не начался</h1>
+    {% else %}
+        <h1>Задачи турнира:</h1>
 
-    <table>
-      <tr> <th>id</th> <th>Назавние</th> <th>Статус</th></tr>
-        {% for task in tasks %}
-          <tr>
-            <td>{{task[0]}}</td> <td><a href="/task/{{contest_id}}/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
-          </tr>
-        {% endfor %}
-    </table>
+        <table>
+          <tr> <th>id</th> <th>Назавние</th> <th>Статус</th></tr>
+            {% for task in tasks %}
+              <tr>
+                <td>{{task[0]}}</td> <td><a href="/task/{{contest_id}}/{{task[0]}}">{{task[1]}}</a></td> <td>{{task[2]}}</td>
+              </tr>
+            {% endfor %}
+        </table>
 
-{% else %}
-    <br><br>
-    {% if error| length != 0 %}
-        <div class="alert">
-          <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
-          {{ error }}
-        </div>
+        <br><br>
+        {% if error| length != 0 %}
+            <div class="alert">
+              <span class="alert_btn" onclick="this.parentElement.style.display='none';">&times;</span>
+              {{ error }}
+            </div>
+        {% endif %}
     {% endif %}
 {% endif %}
-
 {% endblock %}

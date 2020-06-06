@@ -6,10 +6,10 @@ h2 {text-align: center
 
 .copy {
   background-color: RGB(33, 150, 240);
-  height:3rem;
-  width:10rem;
+  border-width: 0px;
+  height:2.5rem;
+  width:9rem;
   border-radius: 4px;
-  margin-right: 1rem;
   transition-duration: 0.4s;
   font-size:1rem;
 }

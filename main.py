@@ -16,7 +16,6 @@ import forms
 from models import User, Contest, Task, __init__, Attempt
 import resources
 
-
 global_init('database.db')
 __init__()
 app = Flask(__name__)
@@ -63,14 +62,13 @@ def register():
             error = "Неправильный формат электронной почты"
         if len(error) == 0:
             new_user = User.add_user(username=username,
-                                    password=password,
-                                    email=email,
-                                    name=name,
-                                    surname=surname,
-                                    city=city)
+                                     password=password,
+                                     email=email,
+                                     name=name,
+                                     surname=surname,
+                                     city=city)
 
             status = new_user.get("status")
-            print(status)
             if status == "ok":
                 verdict = 'Мы выслали вам письмо с подтверждением аккаунта'
             elif status == 'username is already taken':
@@ -135,6 +133,7 @@ def profile_page(user_id):
                            email=email,
                            error=error,
                            api=api,
+                           id=user_id,
                            current_id=current_user.id)
 
 
@@ -142,6 +141,7 @@ def profile_page(user_id):
 @login_required
 def people_page():
     """Профиль"""
+    creator = User.get_user(current_user.id).creator
     results, people, heading = [], [], []
 
     form = forms.PeopleSearch()
@@ -158,6 +158,7 @@ def people_page():
                            form=form,
                            people=results,
                            heading=heading,
+                           creator=creator,
                            current_id=current_user.id)
 
 
@@ -167,7 +168,6 @@ def archive_page():
     """Архив задач"""
 
     tasks, tasks_info = [], Task.get_tasks_by_title("")[:20]
-    print(tasks_info, "default")
     form = forms.TaskSearch()
     if form.validate_on_submit():
         title = form.title.data
@@ -175,10 +175,8 @@ def archive_page():
 
     for i in tasks_info:
         tasks.append([i.id, i.title, i.description])
-    print(tasks)
 
     creator = User.get_user(current_user.id).creator
-    print(creator)
     return render_template('archive.html',
                            type="Архив",
                            creator=creator,
@@ -192,9 +190,9 @@ def archive_page():
 def task_page(contest_id, task_id):
     """Задача"""
     code_file, code, status, error, verdict, attempts = "", "", "", "", "", []
+    current_time, start_time = time.time(), 0
     time_limit, title, author, description, question, input_data, output_data, task_edit, creator, edit = 0.0, "", "", "", "", [], [], "", False, False
     form = forms.CheckTask()
-
     task = Task.get_task(task_id)
 
     if task is not None:
@@ -204,12 +202,15 @@ def task_page(contest_id, task_id):
         description = task.description
         data = task.get_tests()[:2]
         input_data, output_data = [], []
+
+        contest = Contest.get_contest(contest_id)
+        start_time = contest.start_time
+
         for i in data:
             input_data.append(i.input.split("\n"))
             output_data.append(i.output.split("\n"))
 
         edit = False
-        print(task.creator, current_user.id)
         if task.creator == current_user.id:
             edit = True
 
@@ -218,38 +219,29 @@ def task_page(contest_id, task_id):
                 code_file = request.files["code_file"]
                 code_file = code_file.read()
                 code_file = code_file.decode('utf-8')
-                print(code_file)
 
         if form.validate_on_submit():
             written_code = form.written_code.data
             code = written_code if written_code else code_file
 
-        print(code)
         if len(code) != 0:
             attempt = Attempt.add_attempt(contest_id, task_id, current_user.id, code)
             status = attempt.get("status")
-            print(status)
             if status == "ok":
                 verdict = "Задача проверяется"
             elif status == "the same solution has already been sent":
                 error = "Вы уже отправляли идетичное решение"
         form.written_code.data = ""
 
-
-        author = User.get_user(task.creator).username  #-----------------------------------------обработка--------------------------
-        print(author)
-
+        author = User.get_user(task.creator).username
         creator = User.get_user(current_user.id).creator
-        print(creator)
         time_limit = task.time_limit
 
         attempts = Attempt.get_attempts(contest_id, task_id, current_user.id)
-        print(attempts)
 
     else:
         exist = False
         error = "Такой задачи не существуе"
-
 
     return render_template('task.html',
                            type="Задача",
@@ -268,7 +260,9 @@ def task_page(contest_id, task_id):
                            author=author,
                            attempts=attempts,
                            time_limit=time_limit,
-                           current_id=current_user.id)
+                           current_id=current_user.id,
+                           current_time=current_time,
+                           start_time=start_time)
 
 
 @app.route('/create_task', methods=['GET', 'POST'])
@@ -305,7 +299,6 @@ def create_task():
             error = "Вы не загрузили тесты"
 
     creator = User.get_user(current_user.id).creator
-    print(creator)
     return render_template('create_task.html',
                            type="Создать задачу",
                            creator=creator,
@@ -317,7 +310,6 @@ def create_task():
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit_task(task_id):
-
     form = forms.EditTask()
 
     error, creator, verdict, new_reference, task_edit, edit = "", "", "", "", False, False
@@ -326,20 +318,17 @@ def edit_task(task_id):
     if task is not None:
         exist = True
         if request.method == "GET":
-            print("GET success")
             form.title.data = task.title
             form.time_limit.data = task.time_limit
             form.description.data = task.description
 
         if request.method == "POST":
-            print("POST success")
             if request.files:
                 reference = request.files["reference"]
                 reference = reference.read()
                 new_reference = reference.decode('utf-8')
 
         if form.validate_on_submit():
-            print("VALIDATE success")
             new_title = form.title.data
             new_description = form.description.data
             new_time_limit = form.time_limit.data
@@ -348,11 +337,11 @@ def edit_task(task_id):
                 new_reference = task.reference
 
             status = task.change_data(time_limit=new_time_limit if new_time_limit != task.time_limit else None,
-                             title=new_title if new_title != task.title else None,
-                             description=new_description if new_description != task.description else None,
-                             reference=new_reference if new_reference != task.reference else None).get("status")
+                                      title=new_title if new_title != task.title else None,
+                                      description=new_description if new_description != task.description else None,
+                                      reference=new_reference if new_reference != task.reference else None).get(
+                "status")
 
-            print(status)
             if status == "ok":
                 verdict = "Данные успешно изменены"
             if status == "same task has already been added":
@@ -363,7 +352,6 @@ def edit_task(task_id):
             edit = True
 
         creator = User.get_user(current_user.id).creator
-        print(creator)
 
     else:
         error = "Такой задачи не существует"
@@ -386,7 +374,6 @@ def edit_task(task_id):
 def system():
     """О системе"""
     creator = User.get_user(current_user.id).creator
-    print(creator)
     return render_template('system.html',
                            type="О системе",
                            creator=creator,
@@ -414,7 +401,6 @@ def contests_page():
                          datetime.datetime.fromtimestamp(i.end_time).strftime('%Y-%m-%d %H:%M:%S')])
 
     creator = User.get_user(current_user.id).creator
-    print(creator)
     return render_template('contests.html',
                            type="Контесты",
                            creator=creator,
@@ -431,11 +417,15 @@ def contest_page(contest_id):
 
     contest = Contest.get_contest(contest_id)
     creator, error, results, edit = "", "", [], False
+    current_time, start_time = time.time(), 0
 
     if contest is not None:
         exist = True
         tasks = contest.get_tasks()
         results = []
+
+        start_time = contest.start_time
+
         for i in tasks:
             last_result = Attempt.get_last_result(contest_id, i.id, current_user.id)
 
@@ -445,13 +435,10 @@ def contest_page(contest_id):
         if str(current_user.id) in contest.creators.split(","):
             edit = True
 
-        print(edit)
-
         creator = User.get_user(current_user.id).creator
-        print(creator)
 
     else:
-        error= "Такого контеста не существует"
+        error = "Такого контеста не существует"
         exist = False
 
     return render_template('contest.html',
@@ -462,7 +449,9 @@ def contest_page(contest_id):
                            contest_edit=edit,
                            current_id=current_user.id,
                            error=error,
-                           contest_id=contest_id)
+                           contest_id=contest_id,
+                           current_time=current_time,
+                           start_time=start_time)
 
 
 @app.route('/edit_contest/<int:contest_id>', methods=['GET', 'POST'])
@@ -481,14 +470,12 @@ def edit_contest(contest_id):
             form.tasks.data = contest.tasks
 
             start = datetime.datetime.fromtimestamp(contest.start_time).strftime('%Y-%m-%d %H:%M:%S').split()
-            form.start_date.data = start[0]  #нужно распарсить аремя на date и time
+            form.start_date.data = start[0]  # нужно распарсить аремя на date и time
             form.start_time.data = start[1]
 
             end = datetime.datetime.fromtimestamp(contest.end_time).strftime('%Y-%m-%d %H:%M:%S').split()
             form.end_date.data = end[0]
             form.end_time.data = end[1]
-
-            print(form.start_time.data, form.end_time.data)
 
         if form.validate_on_submit():
             new_creators = tuple(form.creators.data.split(','))
@@ -508,27 +495,23 @@ def edit_contest(contest_id):
             end = time.strptime(end, "%Y-%m-%d %H:%M:%S")
             new_end = int(time.mktime(end))
 
-            print(new_start, new_end)
             if new_start >= new_end:
                 error = "Неправильный формат даты проведения турнира"
 
             status = contest.change_data(creators=new_creators if new_creators != contest.creators else None,
-                                    title=new_title if new_title != contest.title else None,
-                                    description=new_description if new_description != contest.description else None,
-                                    tasks=new_tasks if new_tasks != contest.tasks else None,
-                                    start_time=new_start if new_start != contest.start_time else None,
-                                    end_time=new_end if new_end != contest.end_time else None).get("status")
-            print(status)
+                                         title=new_title if new_title != contest.title else None,
+                                         description=new_description if new_description != contest.description else None,
+                                         tasks=new_tasks if new_tasks != contest.tasks else None,
+                                         start_time=new_start if new_start != contest.start_time else None,
+                                         end_time=new_end if new_end != contest.end_time else None).get("status")
             if status == "ok":
                 verdict = "Данные успешно изменены"
             if status == "same contest has already been added":
                 error = "Не были внесены изменения"
 
         creator = User.get_user(current_user.id).creator
-        print(creator)
 
         edit = False
-        print(current_user.id, contest.creators)
         if current_user.id in contest.creators.split(','):
             edit = True
 
@@ -575,7 +558,6 @@ def create_contest():
         end = int(time.mktime(end))
 
         status = Contest.add_contest(creators, title, description, tasks, start, end).get("status")
-        print(creators, title, description, tasks, start, end)
         if start >= end:
             error = "Неправильный формат даты проведения турнира"
 
@@ -583,7 +565,6 @@ def create_contest():
             error = "Такой турнир уже существует"
 
     creator = User.get_user(current_user.id).creator
-    print(creator)
 
     return render_template('create_contest.html',
                            type="Создать контест",
@@ -605,17 +586,13 @@ def results_page(contest_id):
         title = contest.title
 
         edit = False
-        print(current_user.id, contest.creators)
         if current_user.id == str(contest.creators):
             edit = True
 
         rating = enumerate(contest.get_rating())
-        print(rating)
         tasks = [[i.id, i.title] for i in contest.get_tasks()]
-        print(tasks)
 
         creator = User.get_user(current_user.id).creator
-        print(creator)
 
     else:
         exist = False
@@ -638,9 +615,11 @@ def results_page(contest_id):
 def attempts_page(attempt_id):
     attempt = Attempt.get_attempt(attempt_id)
     tests, error = [], ""
+    solution = ""
     if attempt is not None:
         exist = True
         tests = enumerate(attempt.get_tests_statuses(), start=1)
+        solution = attempt.solution
 
     else:
         exist = False
@@ -650,7 +629,8 @@ def attempts_page(attempt_id):
                            type="Попытки",
                            exist=exist,
                            tests=tests,
-                           error=error)
+                           error=error,
+                           solution=solution)
 
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -684,21 +664,16 @@ def settings():
             if len(new_password) == 0:
                 new_password = None
 
-            print(new_api)
             status = user.change_data(username=new_username if new_username != current_user.username else None,
-                                 name=new_name if new_name != current_user.name else None,
-                                 surname=new_surname if new_surname != current_user.surname else None,
-                                 city=new_city if new_city != current_user.city else None,
-                                 password=new_password,
-                                 api=new_api).get("status")
-            print(status)
+                                      name=new_name if new_name != current_user.name else None,
+                                      surname=new_surname if new_surname != current_user.surname else None,
+                                      city=new_city if new_city != current_user.city else None,
+                                      password=new_password,
+                                      api=new_api).get("status")
             if status == "ok":
                 verdict = "Данные успешно изменены"
 
-        print(new_username, new_name, new_surname, new_city, new_password, new_api)
-
     creator = User.get_user(current_user.id).creator
-    print(creator)
     return render_template('settings.html',
                            type="Настройки",
                            creator=creator,
@@ -742,7 +717,6 @@ def application():
             error = ""
         if len(error) == 0:
             status = user.send_creator_email(reason)
-            print(status)
             verdict = "Запрос успешно отправлен"
 
     return render_template("application.html",
@@ -795,6 +769,5 @@ api.add_resource(resources.ContestsResource, '/api/v1/contests')  # get
 api.add_resource(resources.ContestResource, '/api/v1/contests/<int:contest_id>')  # get, put
 api.add_resource(resources.ContestTaskResource, '/api/v1/contests/<int:contest_id>/<int:task_id>')  # get, post
 api.add_resource(resources.AttemptResource, '/api/v1/attempts/<int:attempt_id>')  # get
-
 
 app.run(host=environ.get('HOST', '0.0.0.0'), port=int(environ.get("PORT", 5000)))

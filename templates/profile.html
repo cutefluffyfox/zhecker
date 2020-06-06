@@ -17,7 +17,13 @@
   <h1>{{ name }} {{ surname }}</h1>
   <h2>{{ email }}</h2>
   <h2>{{ city }}</h2>
-  <p> <input type="hidden" value="{{ api }}" id="myInput"> <button class="copy" onclick="copy_api()">Скопировать API</button> </p>
+{% if current_id == id %}
+    <p> <input class="api" type="text" value="{{ api }}" id="myInput">
+
+  <!-- The button used to copy the text -->
+  <button class="copy" onclick="myFunction()">Скопировать API</button> </p>
+{% endif %}
+
 
 
 {% endblock %}
