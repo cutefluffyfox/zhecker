@@ -25,7 +25,7 @@ login_manager = LoginManager(app)
 
 
 def update_server():
-    print('Update background task: ', get('https://zhecker.herokuapp.com/'))
+    get(environ['HOST_FULLNAME'])
 
 
 scheduler = BackgroundScheduler()

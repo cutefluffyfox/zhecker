@@ -1,11 +1,12 @@
 from flask import jsonify
 from flask_restful import Resource, reqparse, abort
 from models import User, Task, Contest, Attempt
+from time import time
 
 
-def get_user(api_key: str, is_creator=False) -> User:
+def get_user(api_key: str, is_creator=None) -> User:
     user = User.get_api(api_key)
-    if user is None or user.creator != is_creator:
+    if user is None or (is_creator is not None and user.creator != is_creator):
         abort(401, message=f"Invalid api_key")
     return user
 
@@ -71,6 +72,8 @@ class ContestResource(Resource):
         contest = Contest.get_contest(contest_id)
         if contest is None:
             abort(404, message=f'Invalid contest_id: {contest_id}')
+        elif contest.start_time < time() and user not in contest.get_creators():
+            abort(403, message='Contest not started yet')
         return jsonify({'title': contest.title,
                         'creators': ','.join(user.username for user in contest.get_creators()),
                         'description': contest.description,
@@ -112,6 +115,8 @@ class ContestTaskResource(Resource):
         contest = Contest.get_contest(contest_id)
         if contest is None:
             abort(404, message=f'Invalid contest_id: {contest_id}')
+        elif contest.start_time < time():
+            abort(403, message='Contest not started yet')
         return jsonify({'title': task.title,
                         'description': task.description,
                         'tests': [{'input': test.input, 'output': test.output} for test in (task.get_tests() if user.id == task.creator else task.get_tests()[:2])],

@@ -220,7 +220,7 @@ class Task(SqlAlchemyBase):
             task_id = session.query(Task).filter(Task.creator == creator, Task.time_limit == time_limit, Task.title == title, Task.description == description, Task.reference == reference).first().id
             tests_statuses = []
             for test in (tests if tests is not None else []):
-                tests_statuses.append(Test.add_test(task_id=task_id, inp=test.get('input'), points=test.get('points')))
+                tests_statuses.append(Test.add_test(task_id=task_id, inp=str(test.get('input')), points=test.get('points')))
             return {'status': 'ok', 'id': task_id, 'tests_statuses': tests_statuses}
         except AssertionError as ex:
             return {'status': ex.args[0]}
@@ -292,9 +292,9 @@ class Contest(SqlAlchemyBase):
         return [User.get_user(user_id) for user_id in map(int, self.creators.split(','))]
 
     def get_rating(self):
-        """Return [{'task_id': int, 'user_id': int, 'score': int, 'attempt': int}, ...]"""
+        """Return [{'task_id': int, 'user_id': int, 'score': int, 'attempt': int}, ...] for each Attempt send in time"""
         session = create_session()
-        return sorted([(User.get_user(user[0]), [Attempt.get_best_result(self.id, task.id, user[0]) for task in self.get_tasks()], Attempt.get_tasks_sum(self.id, user[0])) for user in session.query(Attempt.user_id).filter(Attempt.contest_id == self.id).distinct()], key=lambda a: a[2], reverse=True)
+        return sorted([(User.get_user(user[0]), [Attempt.get_best_result(self.id, task.id, user[0]) for task in self.get_tasks()], Attempt.get_tasks_sum(self.id, user[0])) for user in session.query(Attempt.user_id).filter(Attempt.contest_id == self.id, Attempt.time >= self.start_time, Attempt.time <= self.end_time).distinct()], key=lambda a: a[2], reverse=True)
 
     def delete_contest(self):
         """Delete contest from database"""
