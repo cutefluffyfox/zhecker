@@ -25,7 +25,8 @@ login_manager = LoginManager(app)
 
 
 def update_server():
-    get(environ['HOST_FULLNAME'])
+    if environ['POLLING'] == 'False':
+        get(environ['HOST_FULLNAME'])
 
 
 scheduler = BackgroundScheduler()
